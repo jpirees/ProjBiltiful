@@ -86,7 +86,6 @@ namespace VendasProdutos
                     Console.ReadKey();
                     return;
                 }
-
             }
 
             Console.Clear();

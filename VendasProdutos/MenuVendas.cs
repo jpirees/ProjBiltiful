@@ -32,7 +32,10 @@ namespace VendasProdutos
                 switch (opcao = Console.ReadLine())
                 {
                     case "1":
-                        NovaVenda();
+                        if (new Read().VerificaListaCliente())
+                            NovaVenda();
+                        else
+                            Console.WriteLine("Para realizar uma venda sera necessario cadastrar um cliente!");
                         break;
 
                     case "2":
@@ -119,6 +122,13 @@ namespace VendasProdutos
                     if (produto == null)
                     {
                         Console.WriteLine("\nProduto não encontrado ou código inválido.");
+                        Console.ReadKey();
+                        Console.Clear();
+                        continue;
+                    }
+                    else if (produto.Situacao.Equals('I'))
+                    {
+                        Console.WriteLine("\nProduto inativo ou código inválido.");
                         Console.ReadKey();
                         Console.Clear();
                         continue;

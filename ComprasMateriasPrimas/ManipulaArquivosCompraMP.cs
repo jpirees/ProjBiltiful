@@ -64,7 +64,7 @@ namespace ComprasMateriasPrimas
                     {
                         while ((linha = sr.ReadLine()) != null)
                         {
-                            if (Compra.ExtrairId(linha) == idProcura && !new Read().ProcurarCNPJBloqueado(Compra.ExtrairCNPJ(linha)))
+                            if (Compra.ExtrairId(linha) == idProcura && !Read.ProcurarCNPJBloqueado(Compra.ExtrairCNPJ(linha)))
                             {
                                 procura = Compra.ExtrairCompra(linha);
                                 return procura;

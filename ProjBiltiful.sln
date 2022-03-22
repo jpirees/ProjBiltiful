@@ -8,10 +8,15 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ComprasMateriasPrimas", "ComprasMateriasPrimas\ComprasMateriasPrimas.csproj", "{CFC1E769-7B72-4520-AE5A-0ADD4710E58C}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CadastrosBasicos", "CadastrosBasicos\CadastrosBasicos.csproj", "{2948B73E-7A94-4C31-ACBB-96523EC335F2}"
+	ProjectSection(ProjectDependencies) = postProject
+		{45693152-77B0-435B-86AD-176DDE05D318} = {45693152-77B0-435B-86AD-176DDE05D318}
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProducaoCosmeticos", "ProducaoCosmeticos\ProducaoCosmeticos.csproj", "{737C4C2C-6EAC-4932-BAB5-E50E885FFD57}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ProjBiltiful", "ProjBiltiful\ProjBiltiful.csproj", "{244F2098-526B-4C59-8CF6-D1A737522DC9}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BancoDados", "BancoDados\BancoDados.csproj", "{45693152-77B0-435B-86AD-176DDE05D318}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +44,10 @@ Global
 		{244F2098-526B-4C59-8CF6-D1A737522DC9}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{244F2098-526B-4C59-8CF6-D1A737522DC9}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{244F2098-526B-4C59-8CF6-D1A737522DC9}.Release|Any CPU.Build.0 = Release|Any CPU
+		{45693152-77B0-435B-86AD-176DDE05D318}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{45693152-77B0-435B-86AD-176DDE05D318}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{45693152-77B0-435B-86AD-176DDE05D318}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{45693152-77B0-435B-86AD-176DDE05D318}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

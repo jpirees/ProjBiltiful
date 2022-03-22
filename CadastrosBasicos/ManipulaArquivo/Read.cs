@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BancoDados;
 
 namespace CadastrosBasicos.ManipulaArquivos
 {
@@ -15,265 +17,325 @@ namespace CadastrosBasicos.ManipulaArquivos
         public string CaminhoFornecedor { get; set; }
         public string CaminhoBloqueado { get; set; }
 
-        public Read()
-        {
-            AcharArquivos();
-        }
+        public Read() { }
 
-        public void AcharArquivos()
+
+        #region Cliente [Procura | Verifica Lista | Lista | Procura Inadimplente]
+        public static Cliente ProcuraCliente(string cpf)
         {
-            string caminhoInicial = Directory.GetCurrentDirectory();
-            CaminhoFinal = Path.Combine(caminhoInicial, "DataBase");
-            if (!File.Exists(CaminhoFinal))
+            Cliente cliente = null;
+
+            _ = new Configuracao();
+
+            using (var conexao = Configuracao.Conexao())
             {
-                Directory.CreateDirectory(CaminhoFinal);
-            }
-            CaminhoCadastro = CaminhoFinal + "\\Cliente.dat";
-            if (!File.Exists(CaminhoCadastro))
-                File.Create(CaminhoCadastro).Close();
-            ClienteInadimplente = CaminhoFinal + "\\Risco.dat";
-            if (!File.Exists(ClienteInadimplente))
-                File.Create(ClienteInadimplente).Close();
-            CaminhoBloqueado = CaminhoFinal + "\\Bloqueado.dat";
-            if (!File.Exists(CaminhoBloqueado))
-                File.Create(CaminhoBloqueado).Close();
-            CaminhoFornecedor = CaminhoFinal + "\\Fornecedor.dat";
-            if (!File.Exists(CaminhoFornecedor))
-                File.Create(CaminhoFornecedor).Close();
-        }
-        public bool ProcurarCNPJBloqueado(string cnpj)
-        {
+                string sql = $"SELECT CPF, Nome, Data_Nasc, Sexo, Ultima_Compra, Data_Cadastro, Situacao, Risco FROM dbo.Cliente WHERE CPF='{cpf}'";
 
-            cnpj = cnpj.Replace(".", "").Replace("-", "").Replace("/", "");
-            string cnpjBloqueado = "";
+                conexao.Open();
 
-            try
-            {
-                using (StreamReader sr = new StreamReader(CaminhoBloqueado))
+                using (SqlCommand cmd = new(sql, conexao))
                 {
-                    cnpjBloqueado = sr.ReadLine();
-
-                    while (cnpjBloqueado != null)
+                    try
                     {
-                        if (cnpjBloqueado == cnpj)
+                        SqlDataReader dado = cmd.ExecuteReader();
+
+                        while (dado.Read())
                         {
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(2).ToString()).ToString("dd/MM/yyyy"), out DateTime dataNasc);
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(4).ToString()).ToString("dd/MM/yyyy"), out DateTime ultimaCompra);
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(5).ToString()).ToString("dd/MM/yyyy"), out DateTime dataCadastro);
 
-                            return true;
+                            cliente = new Cliente((string)dado.GetValue(0), (string)dado.GetValue(1), dataNasc, char.Parse((string)dado.GetValue(3)), ultimaCompra, dataCadastro, char.Parse((string)dado.GetValue(6)), (bool)dado.GetValue(7));
                         }
-                        cnpjBloqueado = sr.ReadLine();
                     }
-
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Ocorreu um erro: " + ex.Message);
-            }
-
-            return false;
-
-        }
-        public bool ProcurarCPFBloqueado(string cpf)
-        {
-
-            cpf = cpf.Replace(".", "").Replace("-", "");
-            string cpfBloqueado = "";
-          
-            try
-            {
-                using (StreamReader sr = new StreamReader(ClienteInadimplente))
-                {
-                    cpfBloqueado = sr.ReadLine();
-
-                    while (cpfBloqueado != null)
+                    catch (Exception ex)
                     {
-                        if (cpfBloqueado == cpf)
-                        {
-                            return true;
-                        }
-                        cpfBloqueado = sr.ReadLine();
+                        Console.WriteLine("Exception: " + ex.Message);
                     }
-
-                    return false;
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Ocorreu um erro: " + ex.Message);
-            }
-
-            return false;
-
-        }
-        public bool VerificaListaFornecedor()
-        {
-            if (File.ReadAllLines(CaminhoFornecedor).Length == 0)
-                return false;
-            else
-                return true;
-        }
-        public bool VerificaListaCliente()
-        {
-            if (File.ReadAllLines(CaminhoCadastro).Length == 0)
-                return false;
-            else
-                return true;
-        }
-        public List<Fornecedor> ListaArquivoFornecedor()
-        {
-            List<Fornecedor> fornecedores = new List<Fornecedor>();
-            string procuraFornecedor = "", rSocial = "", cnpj = "";
-            DateTime dAbertura, uCompra, dCadastro;
-            char situacao;
-            
-            try
-            {
-                using (StreamReader sr = new StreamReader(CaminhoFornecedor))
-                {
-                    procuraFornecedor = sr.ReadLine();
-                    while (procuraFornecedor != null)
+                    finally
                     {
-                        cnpj = procuraFornecedor.Substring(0, 14); ;
-                        rSocial = procuraFornecedor.Substring(14, 50);
-                        dAbertura = DateTime.Parse(procuraFornecedor.Substring(64, 10));
-                        uCompra = DateTime.Parse(procuraFornecedor.Substring(74, 10));
-                        dCadastro = DateTime.Parse(procuraFornecedor.Substring(84, 10));
-                        situacao = char.Parse(procuraFornecedor.Substring(94, 1));
-                        fornecedores.Add(new Fornecedor(cnpj, rSocial, dAbertura, uCompra, dCadastro, situacao));
-
-                        procuraFornecedor = sr.ReadLine();
+                        conexao.Close();
                     }
                 }
-                return fornecedores;
             }
-            
-            catch (Exception ex)
-            {
-                Console.WriteLine("Ocorreu um erro: " + ex.Message);
-            }
-            return fornecedores;
+
+            return cliente;
         }
-        //Retorna lista de clientes
-        public List<Cliente> ListaArquivoCliente()
+
+        public static bool VerificaListaCliente()
+        {
+            int registros = 0;
+
+            _ = new Configuracao();
+
+            using (var conexao = Configuracao.Conexao())
+            {
+                string sql = $"SELECT COUNT(CPF) AS Registros FROM dbo.Cliente";
+
+                conexao.Open();
+
+                using (SqlCommand cmd = new(sql, conexao))
+                {
+                    try
+                    {
+                        cmd.ExecuteNonQuery();
+                        registros = (int)cmd.ExecuteScalar();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Exception: " + ex.Message);
+                    }
+                    finally
+                    {
+                        conexao.Close();
+                    }
+                }
+            }
+
+            return registros == 0;
+        }
+
+        public static List<Cliente> ListaArquivoCliente()
         {
             List<Cliente> clientes = new List<Cliente>();
-            string procuraCliente = "", nome = "", cpf = "";
-            DateTime dNascimento, uCompra, dCadastro;
-            Cliente buscaCliente;
 
-            try
+            _ = new Configuracao();
+
+            using (var conexao = Configuracao.Conexao())
             {
-                using (StreamReader sr = new StreamReader(CaminhoCadastro))
+                string sql = $"SELECT CPF, Nome, Data_Nasc, Sexo, Ultima_Compra, Data_Cadastro, Situacao, Risco FROM dbo.Cliente";
+
+                conexao.Open();
+
+                using (SqlCommand cmd = new(sql, conexao))
                 {
-                    procuraCliente = sr.ReadLine();
-                    while (procuraCliente != null)
+                    try
                     {
-                        cpf = procuraCliente.Substring(0, 11);
-                        nome = procuraCliente.Substring(11, 50);
-                        dNascimento = DateTime.Parse(procuraCliente.Substring(61, 10));
-                        char sexo = char.Parse(procuraCliente.Substring(71, 1));
-                        uCompra = DateTime.Parse(procuraCliente.Substring(72, 10));
-                        dCadastro = DateTime.Parse(procuraCliente.Substring(82, 10));
-                        char situacao = char.Parse(procuraCliente.Substring(92, 1));
-                        buscaCliente = new Cliente(cpf, nome, dNascimento, sexo, uCompra, dCadastro, situacao);
-                        clientes.Add(buscaCliente);
-                        procuraCliente = sr.ReadLine();
-                    }
-                }
-                return clientes;
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Ocorreu um erro: " + ex.Message);
-            }
-            return null;
+                        SqlDataReader dado = cmd.ExecuteReader();
 
-
-        }
-        //Fornecedor nao retorna valores.
-        public Fornecedor ProcurarFornecedor(string procuraCnpj)
-        {
-            string procuraFornecedor = "", rSocial = "";
-            procuraCnpj = procuraCnpj.Replace(".", "").Replace("-", "").Replace("/", "");
-            DateTime dAbertura, uCompra, dCadastro;
-            char situacao;
-            Fornecedor fornecedor;
-            if (!File.Exists(CaminhoFornecedor))
-                File.Create(CaminhoFornecedor).Close();
-            try
-            {
-
-                using (StreamReader sr = new StreamReader(CaminhoFornecedor))
-                {
-                    procuraFornecedor = sr.ReadLine();
-
-                    while (procuraFornecedor != null)
-                    {
-                        string cnpj = procuraFornecedor.Substring(0, 14);
-                        if (procuraCnpj == cnpj)
+                        while (dado.Read())
                         {
-                            rSocial = procuraFornecedor.Substring(14, 50).Trim();
-                            dAbertura = DateTime.Parse(procuraFornecedor.Substring(64, 10));
-                            uCompra = DateTime.Parse(procuraFornecedor.Substring(74, 10));
-                            dCadastro = DateTime.Parse(procuraFornecedor.Substring(84, 10));
-                            situacao = char.Parse(procuraFornecedor.Substring(94, 1));
-                            fornecedor = new Fornecedor(cnpj, rSocial, dAbertura, uCompra, dCadastro, situacao);
-                            return fornecedor;
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(2).ToString()).ToString("dd/MM/yyyy"), out DateTime dataNasc);
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(4).ToString()).ToString("dd/MM/yyyy"), out DateTime ultimaCompra);
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(5).ToString()).ToString("dd/MM/yyyy"), out DateTime dataCadastro);
+
+                            clientes.Add(new Cliente((string)dado.GetValue(0), (string)dado.GetValue(1), dataNasc, char.Parse((string)dado.GetValue(3)), ultimaCompra, dataCadastro, char.Parse((string)dado.GetValue(6)), (bool)dado.GetValue(7)));
                         }
-
-                        procuraFornecedor = sr.ReadLine();
                     }
-                    return null;
-                }
-
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Ocorreu um erro: " + ex.Message);
-            }
-            return null;
-        }
-
-
-        public Cliente ProcuraCliente(string cpf)
-        {
-            string procuraCliente = "";
-            Cliente cliente;
-            cpf = cpf.Replace(".", "").Replace("-", "");
-            try
-            {
-
-                using (StreamReader sr = new StreamReader(CaminhoCadastro))
-                {
-                    procuraCliente = sr.ReadLine();
-
-                    while (procuraCliente != null)
+                    catch (Exception ex)
                     {
-                        string recebeCpf = procuraCliente.Substring(0, 11);
-                        if (recebeCpf == cpf)
-                        {
-                            string nome = procuraCliente.Substring(11, 50);
-                            DateTime dNascimento = DateTime.Parse(procuraCliente.Substring(61, 10));
-                            char sexo = char.Parse(procuraCliente.Substring(71, 1));
-                            DateTime uCompra = DateTime.Parse(procuraCliente.Substring(72, 10));
-                            DateTime dCadastro = DateTime.Parse(procuraCliente.Substring(82, 10));
-                            char situacao = char.Parse(procuraCliente.Substring(92, 1));
-                            cliente = new Cliente(cpf, nome, dNascimento, sexo, uCompra, dCadastro, situacao);
-                            return cliente;
-                        }
-                        procuraCliente = sr.ReadLine();
+                        Console.WriteLine("Exception: " + ex.Message);
                     }
-
+                    finally
+                    {
+                        conexao.Close();
+                    }
                 }
-                return null;
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Ocorreu um erro: " + ex.Message);
-            }
-            return null;
+
+            return clientes;
         }
 
+        public static bool ProcurarCPFBloqueado(string cpf)
+        {
+
+            Cliente cliente = null;
+
+            _ = new Configuracao();
+
+            using (var conexao = Configuracao.Conexao())
+            {
+                string sql = $"SELECT CPF, Nome, Data_Nasc, Sexo, Ultima_Compra, Data_Cadastro, Situacao, Risco FROM dbo.Cliente WHERE CPF='{cpf}'";
+
+                conexao.Open();
+
+                using (SqlCommand cmd = new(sql, conexao))
+                {
+                    try
+                    {
+                        SqlDataReader dado = cmd.ExecuteReader();
+
+                        while (dado.Read())
+                        {
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(2).ToString()).ToString("dd/MM/yyyy"), out DateTime dataNasc);
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(4).ToString()).ToString("dd/MM/yyyy"), out DateTime ultimaCompra);
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(5).ToString()).ToString("dd/MM/yyyy"), out DateTime dataCadastro);
+
+                            cliente = new Cliente((string)dado.GetValue(0), (string)dado.GetValue(1), dataNasc, char.Parse((string)dado.GetValue(3)), ultimaCompra, dataCadastro, char.Parse((string)dado.GetValue(6)), (bool)dado.GetValue(7));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Exception: " + ex.Message);
+                    }
+                    finally
+                    {
+                        conexao.Close();
+                    }
+                }
+            }
+
+            return cliente.Risco == true;
+        }
+        #endregion
+
+
+        #region Fornecedor [Procura | Verifica Lista | Lista | Procura Bloqueado]
+        public static Fornecedor ProcurarFornecedor(string cnpj)
+        {
+            Fornecedor fornecedor = null;
+
+            _ = new Configuracao();
+
+            using (var conexao = Configuracao.Conexao())
+            {
+                string sql = $"SELECT CNPJ, Razao_Social, Data_Abertura, Ultima_Compra, Data_Cadastro, Situacao, Bloqueio FROM dbo.Fornecedor WHERE CNPJ='{cnpj}'";
+
+                conexao.Open();
+
+                using (SqlCommand cmd = new(sql, conexao))
+                {
+                    try
+                    {
+                        SqlDataReader dado = cmd.ExecuteReader();
+
+                        while (dado.Read())
+                        {
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(2).ToString()).ToString("dd/MM/yyyy"), out DateTime dataAbertura);
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(3).ToString()).ToString("dd/MM/yyyy"), out DateTime ultimaCompra);
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(4).ToString()).ToString("dd/MM/yyyy"), out DateTime dataCadastro);
+
+                            fornecedor = new Fornecedor((string)dado.GetValue(0), (string)dado.GetValue(1), dataAbertura, ultimaCompra, dataCadastro, char.Parse((string)dado.GetValue(5)), (bool) dado.GetValue(6));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Exception: " + ex.Message);
+                    }
+                    finally
+                    {
+                        conexao.Close();
+                    }
+                }
+            }
+
+            return fornecedor;
+        }
+
+        public static bool VerificaListaFornecedor()
+        {
+            int registros = 0;
+
+            _ = new Configuracao();
+
+            using (var conexao = Configuracao.Conexao())
+            {
+                string sql = $"SELECT COUNT(CNPJ) AS Registros FROM dbo.Fornecedor";
+
+                conexao.Open();
+
+                using (SqlCommand cmd = new(sql, conexao))
+                {
+                    try
+                    {
+                        cmd.ExecuteNonQuery();
+                        registros = (int)cmd.ExecuteScalar();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Exception: " + ex.Message);
+                    }
+                    finally
+                    {
+                        conexao.Close();
+                    }
+                }
+            }
+
+            return registros != 0;
+        }
+
+        public static List<Fornecedor> ListaArquivoFornecedor()
+        {
+            List<Fornecedor> fornecedores = new List<Fornecedor>();
+
+            _ = new Configuracao();
+
+            using (var conexao = Configuracao.Conexao())
+            {
+                string sql = $"SELECT CNPJ, Razao_Social, Data_Abertura, Ultima_Compra, Data_Cadastro, Situacao, Bloqueio FROM dbo.Fornecedor";
+
+                conexao.Open();
+
+                using (SqlCommand cmd = new(sql, conexao))
+                {
+                    try
+                    {
+                        SqlDataReader dado = cmd.ExecuteReader();
+
+                        while (dado.Read())
+                        {
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(2).ToString()).ToString("dd/MM/yyyy"), out DateTime dataAbertura);
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(3).ToString()).ToString("dd/MM/yyyy"), out DateTime ultimaCompra);
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(4).ToString()).ToString("dd/MM/yyyy"), out DateTime dataCadastro);
+
+                            fornecedores.Add(new Fornecedor((string)dado.GetValue(0), (string)dado.GetValue(1), dataAbertura, ultimaCompra, dataCadastro, char.Parse((string)dado.GetValue(5)), (bool)dado.GetValue(6)));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Exception: " + ex.Message);
+                    }
+                    finally
+                    {
+                        conexao.Close();
+                    }
+                }
+            }
+
+            return fornecedores;
+        }
+
+        public static bool ProcurarCNPJBloqueado(string cnpj)
+        {
+            Fornecedor fornecedor = null;
+
+            _ = new Configuracao();
+
+            using (var conexao = Configuracao.Conexao())
+            {
+                string sql = $"SELECT CNPJ, Razao_Social, Data_Abertura, Ultima_Compra, Data_Cadastro, Situacao, Bloqueio FROM dbo.Fornecedor WHERE CNPJ='{cnpj}'";
+
+                conexao.Open();
+
+                using (SqlCommand cmd = new(sql, conexao))
+                {
+                    try
+                    {
+                        SqlDataReader dado = cmd.ExecuteReader();
+
+                        while (dado.Read())
+                        {
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(2).ToString()).ToString("dd/MM/yyyy"), out DateTime dataAbertura);
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(3).ToString()).ToString("dd/MM/yyyy"), out DateTime ultimaCompra);
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(4).ToString()).ToString("dd/MM/yyyy"), out DateTime dataCadastro);
+
+                            fornecedor = new Fornecedor((string)dado.GetValue(0), (string)dado.GetValue(1), dataAbertura, ultimaCompra, dataCadastro, char.Parse((string)dado.GetValue(5)), (bool)dado.GetValue(6));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Exception: " + ex.Message);
+                    }
+                    finally
+                    {
+                        conexao.Close();
+                    }
+                }
+            }
+
+            return fornecedor.Bloqueio == true;
+        }
+        #endregion
     }
 }

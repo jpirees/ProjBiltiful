@@ -15,6 +15,7 @@ namespace CadastrosBasicos
         public DateTime UltimaVenda { get; set; }
         public DateTime DataCadastro { get; set; }
         public char Situacao { get; set; }
+        public bool? Risco { get; set; }
 
         public Cliente()
         {
@@ -31,7 +32,7 @@ namespace CadastrosBasicos
             DataCadastro = DateTime.Now;
             Situacao = situacao;
         }
-        public Cliente(string cpf, string name, DateTime dataNascimento, char sexo, DateTime UltimaCompra, DateTime dataCadastro, char situacao)
+        public Cliente(string cpf, string name, DateTime dataNascimento, char sexo, DateTime UltimaCompra, DateTime dataCadastro, char situacao, bool? risco)
         {
             CPF = cpf;
             Nome = name;
@@ -40,21 +41,26 @@ namespace CadastrosBasicos
             UltimaVenda = UltimaCompra;
             DataCadastro = dataCadastro;
             Situacao = situacao;
+            Risco = risco;
         }
 
 
-        public void BloqueiaCadastro()
+        public static void BloqueiaCadastro()
         {
+            Console.Clear();
+
             Cliente cliente;
+
             Console.WriteLine("Insira o CPF para bloqueio: ");
             string cpf = Console.ReadLine();
-            cpf = cpf.Replace(".", "").Replace("-", "");
-            if (read.ProcurarCPFBloqueado(cpf))
+
+            if (Read.ProcurarCPFBloqueado(cpf))
             {
                 bool flag = false;
                 int opcao;
-                Console.WriteLine("Cliente ja esta bloqueado");
-                Console.WriteLine("Deseja desbloqueado ? [1 - Sim/ 2 - Nao]");
+
+                Console.WriteLine("\nCliente já está bloqueado.");
+                Console.WriteLine("\nDeseja desbloqueado ? [1 - Sim | 2 - Nao]");
 
                 do
                 {
@@ -63,31 +69,29 @@ namespace CadastrosBasicos
 
                 if (opcao == 1)
                 {
-                    write.DesbloqueiaCliente(cpf);
-                    Console.WriteLine("Cliente desbloqueado");
-                    Console.WriteLine("Pressione enter para continuar...");
+                    Write.DesbloqueiaCliente(cpf);
+                    Console.WriteLine("\n Cliente desbloqueado.");
+                    Console.WriteLine("\n Pressione ENTER para continuar...");
                     Console.ReadKey();
                 }
-                
             }
             else
             {
                 if (Validacoes.ValidarCpf(cpf))
                 {
-                    cliente = read.ProcuraCliente(cpf);
+                    cliente = Read.ProcuraCliente(cpf);
                     if (cliente != null)
                     {
-                        write.BloqueiaCliente(cliente.CPF);
-                        Console.WriteLine("CPF bloqueado!");
+                        Write.BloqueiaCliente(cliente.CPF);
+                        Console.WriteLine("\nCPF bloqueado!");
+                        Console.ReadKey();
                     }
                 }
                 else
                 {
-                    Console.WriteLine("CPF incorreto!");
+                    Console.WriteLine("\nCPF incorreto!");
                 }
             }
-            Console.WriteLine("Pressione enter para continuar...");
-            Console.ReadKey();
         }
         public Cliente Editar()
         {
@@ -96,13 +100,16 @@ namespace CadastrosBasicos
             Console.Write("CPF: ");
             string cpf = Console.ReadLine();
 
-            cliente = read.ProcuraCliente(cpf);
+            cliente = Read.ProcuraCliente(cpf);
+
             if (cliente != null)
             {
                 Console.WriteLine("Nome: ");
-                string nome = Console.ReadLine().Trim().PadLeft(50, ' ');
+                string nome = Console.ReadLine().Trim();
+
                 Console.WriteLine("Data de nascimento: ");
                 bool flag = DateTime.TryParse(Console.ReadLine(), out DateTime dNascimento);
+
                 Console.WriteLine("Situacao [A - Ativo/I - Inativo]: ");
                 bool flagSituacao = char.TryParse(Console.ReadLine().Trim().ToUpper(), out char situacao);
 
@@ -112,24 +119,23 @@ namespace CadastrosBasicos
 
                 write.EditarCliente(cliente);
 
-                Console.WriteLine("Cliente Cadastrado com sucesso");
-                Console.WriteLine("Pressione enter para continuar...");
+                Console.WriteLine("\n Cliente cadastrado com sucesso.");
+                Console.WriteLine("\n Pressione ENTER para continuar...");
                 Console.ReadKey();
             }
+
             return cliente;
         }
-        public string RetornaArquivo()
-        {
-            return $"{CPF}{Nome}{DataNascimento.ToString("dd/MM/yyyy")}{Sexo}{UltimaVenda.ToString("dd/MM/yyyy")}{DataCadastro.ToString("dd/MM/yyyy")}{Situacao}";
 
-        }
-        public void Navegar()
+        public static void Navegar()
         {
             Console.WriteLine("============== Cliente ==============");
-            bool verificaArquivo = read.VerificaListaCliente();
-            if (verificaArquivo == true)
+
+            bool verificaArquivo = Read.VerificaListaCliente();
+
+            if (!verificaArquivo)
             {
-                List<Cliente> lista = read.ListaArquivoCliente();
+                List<Cliente> lista = Read.ListaArquivoCliente();
                 int opcao = 0, posicao = 0;
                 bool flag = false;
                 do
@@ -187,44 +193,50 @@ namespace CadastrosBasicos
             else
             {
                 Console.Clear();
-                Console.WriteLine("Ainda nao tem nenhum cliente cadastrado");
-                Console.WriteLine("Pressione enter para continuar...");
+                Console.WriteLine("\n Ainda não há clientes cadastrados.");
+                Console.WriteLine("\n Pressione ENTER para continuar...");
                 Console.ReadKey();
             }
         }
-        public void Localizar()
+        public static void Localizar()
         {
+            Console.Clear();
+
             Console.WriteLine("Insira o cpf para localizar: ");
             string cpf = Console.ReadLine();
 
-            Cliente cliente = read.ProcuraCliente(cpf);
+            Cliente cliente = Read.ProcuraCliente(cpf);
 
-            if (cliente != null)
+            if (cliente == null)
             {
-                Console.WriteLine(cliente.ToString());
-                
+                Console.WriteLine("\n Nenhum cadastrado encontrado!");
+                Console.WriteLine("\n Pressione ENTER para continuar...");
+                Console.ReadKey();
+                return;
             }
-            else
-                Console.WriteLine("Nenhum cadastrado foi encontrado!");
-            Console.WriteLine("Pressione enter para continuar...");
+
+            Console.WriteLine(cliente.ToString());
             Console.ReadKey();
         }
-        public void ClientesBloqueados()
+        public static void ClientesBloqueados()
         {
+            Console.Clear();
+
             Console.WriteLine("Insira o CPF para pesquisa: ");
             string cpf = Console.ReadLine();
-            bool flag = new Read().ProcurarCPFBloqueado(cpf);
-            
+            bool flag = Read.ProcurarCPFBloqueado(cpf);
+
             if (flag)
             {
-                Cliente cliente = new Read().ProcuraCliente(cpf);
+                Cliente cliente = Read.ProcuraCliente(cpf);
                 Console.WriteLine(cliente.ToString());
             }
             else
             {
-                Console.WriteLine("Cliente bloqueado nao encontrado");
+                Console.WriteLine("\n Cliente bloqueado não encontrado");
             }
-            Console.WriteLine("Pressione enter para continuar...");
+
+            Console.WriteLine("\n Pressione ENTER para continuar...");
             Console.ReadKey();
         }
         public override string ToString()

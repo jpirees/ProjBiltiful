@@ -137,7 +137,7 @@ namespace VendasProdutos
 
                 Venda venda = new Venda(int.Parse(idVenda), cpf.Insert(3, ".").Insert(7, ".").Insert(11, "-"), dt, Decimal.Parse(vtotal.Insert(vtotal.Length - 2, ",")));
 
-                Cliente cliente = new Read().ProcuraCliente(venda.Cliente);
+                Cliente cliente = Read.ProcuraCliente(venda.Cliente);
 
                 List<ItemVenda> itens = itemVenda.Localizar(venda.Id);
 

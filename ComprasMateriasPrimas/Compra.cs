@@ -185,7 +185,7 @@ namespace ComprasMateriasPrimas
                 {
                     // ---------- CADASTRAR COMPRA -----------
                     case 1:
-                        if (new Read().VerificaListaFornecedor())
+                        if (Read.VerificaListaFornecedor())
                             CadastraNovaCompra();
                         else
                         {
@@ -233,10 +233,10 @@ namespace ComprasMateriasPrimas
 
                 ok = cnpjFornecedor != string.Empty &&
                      Validacoes.ValidarCnpj(cnpjFornecedor) &&
-                     new Read().ProcurarFornecedor(cnpjFornecedor) != null ? 0 : 1;
+                     Read.ProcurarFornecedor(cnpjFornecedor) != null ? 0 : 1;
                 if (ok != 0) Console.WriteLine("CNPJ invalido ou não encontrado na base de dados, digite novamente!");
             } while (ok != 0);
-            cnpjFornecedor = new Read().ProcurarFornecedor(cnpjFornecedor).CNPJ;
+            cnpjFornecedor = Read.ProcurarFornecedor(cnpjFornecedor).CNPJ;
 
             int count = 1;
             List<ItemCompra> itens = new();

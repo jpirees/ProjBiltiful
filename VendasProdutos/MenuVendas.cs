@@ -32,7 +32,7 @@ namespace VendasProdutos
                 switch (opcao = Console.ReadLine())
                 {
                     case "1":
-                        if (new Read().VerificaListaCliente())
+                        if (Read.VerificaListaCliente())
                             NovaVenda();
                         else
                             Console.WriteLine("Para realizar uma venda sera necessario cadastrar um cliente!");
@@ -66,7 +66,7 @@ namespace VendasProdutos
             Console.WriteLine("informe o CPF do cliente:");
             string cpf = Console.ReadLine();
 
-            if (new Read().ProcurarCPFBloqueado(cpf) == true)
+            if (Read.ProcurarCPFBloqueado(cpf) == true)
             {
                 Console.Clear();
                 Console.WriteLine("\n Falha ao iniciar a venda. Procure pelo gerente do local.");
@@ -76,7 +76,7 @@ namespace VendasProdutos
             }
             else
             {
-                cliente = new Read().ProcuraCliente(cpf);
+                cliente = Read.ProcuraCliente(cpf);
 
                 if (cliente == null)
                 {
@@ -235,7 +235,7 @@ namespace VendasProdutos
 
                 itensVenda.ForEach(item =>
                 {
-                    new Produto().Atualizar(item.Produto, venda.DataVenda.ToString("dd/MM/yyyy"));
+                    Produto.Atualizar(item.Produto, venda.DataVenda.ToString("dd/MM/yyyy"));
                 });
 
                 itemVenda.Cadastrar(itensVenda);
@@ -267,7 +267,7 @@ namespace VendasProdutos
 
             if (venda != null)
             {
-                Cliente cliente = new Read().ProcuraCliente(venda.Cliente);
+                Cliente cliente = Read.ProcuraCliente(venda.Cliente);
                 List<ItemVenda> itens = itemVenda.Localizar(venda.Id);
 
                 Console.WriteLine("----------------------------------------------------------");

@@ -6,6 +6,15 @@ Ao iniciar a execução o mesmo irá se deparar com um menu inicial com as segui
 
 * OBS: Para que o programa funcione corretamente você terá que seguir a seguinte ordem, você deve cadastrar um cliente, um fornecedor, um produto e uma materia prima, após isso conseguirá efetuar producao, vendas e compras.
 
+### MODULOS INTEGRADOS AO BD
+| __Modulos__ | __Integração ao Banco de Dados__ |
+|---------------------------|---------------|
+|    Cadastros   | Total |
+|    Producao    | Não   |
+|    Compras     | Não   |
+|    Vendas      | Total |
+
+
 ### MENU
 | __Opcoes__ | __Menu Principal__ | __Descricao__ |
 |-----|---------------------------|---------------|

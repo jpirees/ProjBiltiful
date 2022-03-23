@@ -32,17 +32,20 @@ namespace VendasProdutos
                 switch (opcao = Console.ReadLine())
                 {
                     case "1":
-                        if (Read.VerificaListaCliente())
+                        if (!Read.VerificaListaCliente())
                             NovaVenda();
                         else
+                        {
                             Console.WriteLine("Para realizar uma venda sera necessario cadastrar um cliente!");
+                            Console.ReadKey();
+                        }
                         break;
 
                     case "2":
                         LocalizarVenda();
                         break;
                     case "3":
-                        new Venda().ImpressaoPorRegistro();
+                        Venda.ImpressaoPorRegistro();
                         break;
                     case "0":
                         break;
@@ -95,7 +98,7 @@ namespace VendasProdutos
             venda.Cliente = cliente.CPF;
             venda.DataVenda = DateTime.Now.Date;
 
-            Console.Write($"Venda Nº {venda.Id.ToString().PadLeft(5, '0')}\tData: {venda.DataVenda.ToString("dd/MM/yyyy")}");
+            Console.Write($"Data: {venda.DataVenda:dd/MM/yyyy}");
             Console.WriteLine();
 
             List<ItemVenda> itensVenda = new List<ItemVenda>();
@@ -111,7 +114,6 @@ namespace VendasProdutos
 
                 do
                 {
-                    produto = new Produto();
 
                     Console.WriteLine("\nDigite o Código do Produto:");
                     string codProduto = Console.ReadLine();
@@ -154,27 +156,29 @@ namespace VendasProdutos
                         Console.Clear();
                         continue;
                     }
+
                 } while ((qtd <= 0 || qtd > 999) || totalItens > (decimal)9999.99 || produto == null);
 
                 Console.Clear();
 
 
-                itensVenda.Add(new ItemVenda(venda.Id, produto.CodigoBarras, qtd, produto.ValorVenda));
+                itensVenda.Add(new ItemVenda(produto.CodigoBarras, qtd, produto.ValorVenda));
 
-                Console.WriteLine("Id\tProduto\t\tQtd\tV.Unitário\tT.Item");
+                Console.WriteLine("Produto\t\t\tQtd\tV.Unitário\tT.Item");
                 Console.WriteLine("------------------------------------------------------");
 
                 decimal valorTotal = 0;
 
                 itensVenda.ForEach(item =>
                 {
-                    Console.WriteLine(item.ToString());
+                    produto = Produto.RetornaProduto(item.Produto);
+                    ItemVenda.Impressao(item, produto);
                     valorTotal += item.TotalItem;
                     venda.ValorTotal = valorTotal;
                 });
 
                 Console.WriteLine("------------------------------------------------------");
-                Console.WriteLine($"\t\t\t\t\t\t{venda.ValorTotal.ToString("#.00")}");
+                Console.WriteLine($"\t\t\t\t\t\t{venda.ValorTotal:#.00}");
 
 
                 do
@@ -205,22 +209,29 @@ namespace VendasProdutos
 
             do
             {
+
+                Produto produto;
+
                 Console.Clear();
                 Console.WriteLine("----------------------------------------------------------");
                 Console.WriteLine("                           CLIENTE                        ");
                 Console.WriteLine("----------------------------------------------------------");
-                Console.WriteLine($"Nome:\t\t{cliente.Nome.TrimStart(' ')}");
-                Console.WriteLine($"CPF:\t\t{cliente.CPF.Insert(3, ".").Insert(7, ".").Insert(11, "-")}");
-                Console.WriteLine($"Data Nasc.:\t{cliente.DataNascimento.ToString("dd/MM/yyyy")}");
-                Console.WriteLine($"Ultima Compra:\t{cliente.UltimaVenda.ToString("dd/MM/yyyy")}");
+                Console.WriteLine($"Nome:\t\t{cliente.Nome}");
+                Console.WriteLine($"CPF:\t\t{cliente.CPF}");
+                Console.WriteLine($"Ultima Compra:\t{cliente.UltimaVenda:dd/MM/yyyy}");
                 Console.WriteLine("\n\n----------------------------------------------------------");
-                Console.WriteLine($"Venda Nº {venda.Id.ToString().PadLeft(5, '0')}\t\t\tData: {venda.DataVenda.ToString("dd/MM/yyyy")}");
+                Console.WriteLine($"Data: {venda.DataVenda:dd/MM/yyyy}");
                 Console.WriteLine("----------------------------------------------------------");
-                Console.WriteLine("\n\nId\tProduto\t\tQtd\tV.Unitário\tT.Item");
+                Console.WriteLine("\n\nProduto\t\t\tQtd\tV.Unitário\tT.Item");
                 Console.WriteLine("----------------------------------------------------------");
-                itensVenda.ForEach(item => Console.WriteLine(item.ToString()));
+                itensVenda.ForEach(item =>
+                {
+                    produto = Produto.RetornaProduto(item.Produto);
+                    ItemVenda.Impressao(item, produto);
+                });
+
                 Console.WriteLine("----------------------------------------------------------");
-                Console.WriteLine($"\t\t\t\t\t\t{venda.ValorTotal.ToString("#.00")}");
+                Console.WriteLine($"\t\t\t\t\t\t{venda.ValorTotal:#.00}");
 
                 Console.WriteLine("\n\n");
 
@@ -238,13 +249,14 @@ namespace VendasProdutos
                     Produto.Atualizar(item.Produto, venda.DataVenda.ToString("dd/MM/yyyy"));
                 });
 
-                itemVenda.Cadastrar(itensVenda);
+                int idVenda = venda.Cadastrar();
 
-                venda.Cadastrar();
-                
+                ItemVenda.Cadastrar(idVenda, itensVenda);
+
+
                 cliente.UltimaVenda = venda.DataVenda;
 
-                new Write().EditarCliente(cliente);
+                //new Write().EditarCliente(cliente);
 
                 Console.WriteLine("\n\nVenda cadastrada com sucesso!\nPressione ENTER para voltar ao Menu Vendas...");
 
@@ -260,23 +272,23 @@ namespace VendasProdutos
             ItemVenda itemVenda = new ItemVenda();
 
             Console.WriteLine("Informe a venda que deseja buscar: ");
-            int.TryParse(Console.ReadLine(), out int id);
+            _ = int.TryParse(Console.ReadLine(), out int id);
             Console.WriteLine();
 
-            venda = venda.Localizar(id);
+            venda = Venda.Localizar(id);
 
             if (venda != null)
             {
                 Cliente cliente = Read.ProcuraCliente(venda.Cliente);
-                List<ItemVenda> itens = itemVenda.Localizar(venda.Id);
+                List<ItemVenda> itens = ItemVenda.Localizar(venda.Id);
 
                 Console.WriteLine("----------------------------------------------------------");
                 Console.WriteLine("                           CLIENTE                        ");
                 Console.WriteLine("----------------------------------------------------------");
-                Console.WriteLine($"Nome:\t\t{cliente.Nome.TrimStart(' ')}");
-                Console.WriteLine($"CPF:\t\t{cliente.CPF.Insert(3, ".").Insert(7, ".").Insert(11, "-")}");
-                Console.WriteLine($"Data Nasc.:\t{cliente.DataNascimento.ToString("dd/MM/yyyy")}");
-                Console.WriteLine($"Ultima Compra:\t{cliente.UltimaVenda.ToString("dd/MM/yyyy")}");
+                Console.WriteLine($"Nome:\t\t{cliente.Nome}");
+                Console.WriteLine($"CPF:\t\t{cliente.CPF}");
+                Console.WriteLine($"Data Nasc.:\t{cliente.DataNascimento:dd/MM/yyyy}");
+                Console.WriteLine($"Ultima Compra:\t{cliente.UltimaVenda:dd/MM/yyyy}");
                 Console.WriteLine("\n\n----------------------------------------------------------");
                 Console.WriteLine($"Venda Nº {venda.Id.ToString().PadLeft(5, '0')}\t\t\tData: {venda.DataVenda.ToString("dd/MM/yyyy")}");
                 Console.WriteLine("----------------------------------------------------------");

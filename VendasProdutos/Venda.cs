@@ -1,6 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Globalization;
 using System.IO;
+using BancoDados;
 using CadastrosBasicos;
 using CadastrosBasicos.ManipulaArquivos;
 
@@ -8,8 +11,6 @@ namespace VendasProdutos
 {
     public class Venda
     {
-        public static Arquivos caminho = new Arquivos();
-
         public int Id { get; set; }
         public string Cliente { get; set; }
         public DateTime DataVenda { get; set; }
@@ -17,7 +18,6 @@ namespace VendasProdutos
 
         public Venda()
         {
-            Id = NovoIdVenda();
             ValorTotal = 0;
         }
 
@@ -31,96 +31,150 @@ namespace VendasProdutos
 
         public override string ToString()
         {
-            return $"Venda Nº {Id.ToString().PadLeft(5, '0')}\tData: {DataVenda.ToString("dd/MM/yyyy")}\nCliente: {Cliente}\nTotal da Venda: {ValorTotal.ToString("00000.00").TrimStart('0')}";
+            return $"Venda Nº {Id.ToString().PadLeft(5, '0')}\tData: {DataVenda:dd/MM/yyyy}\nCliente: {Cliente}\nTotal da Venda: {ValorTotal.ToString("00000.00").TrimStart('0')}";
         }
 
-        public int NovoIdVenda()
+        public int Cadastrar()
         {
+            int idVenda = 0;
+
+            using var conexao = Configuracao.Conexao();
+
             try
             {
-                return File.ReadAllLines(caminho.ArquivoVenda).Length + 1;
+                conexao.Open();
+                string sql = $"INSERT INTO dbo.Venda (CPF_Cliente, Valor_Total) " +
+                    $"OUTPUT INSERTED.ID " +
+                    $"VALUES  ('{Cliente}', '{ValorTotal.ToString(new CultureInfo("en-US"))}')";
+
+                SqlCommand cmd = new SqlCommand(sql, conexao);
+                idVenda = (int) cmd.ExecuteScalar();
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                Console.WriteLine("Exception: " + e.Message);
+                Console.WriteLine("Exception: " + ex.Message);
+                Console.ReadKey();
+            }
+            finally
+            {
+                conexao.Close();
             }
 
-            return -1;
+            return idVenda;
         }
 
-        public void Cadastrar()
+        public static Venda Localizar(int id)
         {
-            try
-            {
-                StreamWriter sw = new StreamWriter(caminho.ArquivoVenda, append: true);
+            Venda venda = null;
 
-                sw.WriteLine(Id.ToString().PadLeft(5, '0') + Cliente.Replace(".", "").Replace("-", "") + DataVenda.ToString("dd/MM/yyyy").Replace("/", "") + ValorTotal.ToString("00000.00").Replace(",", ""));
-
-                sw.Close();
-            }
-            catch (Exception e)
+            using (var conexao = Configuracao.Conexao())
             {
-                Console.WriteLine("Exception: " + e.Message);
+                string sql = $"SELECT ID, CPF_Cliente, Data_Venda, Valor_Total FROM dbo.Venda WHERE ID='{id}'";
+
+                conexao.Open();
+
+                using (SqlCommand cmd = new(sql, conexao))
+                {
+                    try
+                    {
+                        SqlDataReader dado = cmd.ExecuteReader();
+
+                        while (dado.Read())
+                        {
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(2).ToString()).ToString("dd/MM/yyyy"), out DateTime dataVenda);
+
+                            venda = new Venda((int)dado.GetValue(0), (string)dado.GetValue(1), dataVenda, (decimal)dado.GetValue(3));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Exception: " + ex.Message);
+                    }
+                    finally
+                    {
+                        conexao.Close();
+                    }
+                }
             }
+
+            return venda;
         }
 
-        public Venda Localizar(int id)
+        public static bool VerificaListaVenda()
         {
-            string linha = LocalizarVendaPorId(id);
+            int? registros = null;
 
-            if (linha != null)
+            using (var conexao = Configuracao.Conexao())
             {
-                string idVenda = linha.Substring(0, 5);
-                string cliente = linha.Substring(5, 11);
-                string data = linha.Substring(16, 8);
-                string vtotal = linha.Substring(24, 7);
+                string sql = $"SELECT MAX(ID) FROM dbo.Venda";
 
-                DateTime.TryParse(data.Insert(2, "/").Insert(5, "/"), out DateTime dt);
+                conexao.Open();
 
-                Venda venda = new Venda(int.Parse(idVenda), cliente.Insert(3, ".").Insert(7, ".").Insert(11, "-"), dt, Decimal.Parse(vtotal.Insert(vtotal.Length - 2, ",")));
-
-                return venda;
+                using (SqlCommand cmd = new(sql, conexao))
+                {
+                    try
+                    {
+                        cmd.ExecuteNonQuery();
+                        registros = (int)cmd.ExecuteScalar();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Exception: " + ex.Message);
+                    }
+                    finally
+                    {
+                        conexao.Close();
+                    }
+                }
             }
 
-            return null;
+            return registros != null;
         }
 
-        public string LocalizarVendaPorId(int id)
-        {
-            string[] dados = File.ReadAllLines(caminho.ArquivoVenda);
-
-            int minimo = 0;
-            int maximo = dados.Length;
-            int medio;
-
-            while (minimo <= maximo)
-            {
-                medio = (minimo + maximo) / 2;
-
-                if (id > medio)
-                    minimo = medio + 1;
-                else if (id < medio)
-                    maximo = medio - 1;
-                else
-                    return (medio != 0) ? dados[medio - 1] : null;
-            }
-
-            return null;
-        }
-
-        public void ImpressaoPorRegistro()
+        public static void ImpressaoPorRegistro()
         {
             Console.Clear();
 
-            if (File.ReadAllLines(caminho.ArquivoItemVenda).Length == 0)
+            if (!VerificaListaVenda())
             {
                 Console.Clear();
-                Console.WriteLine("Não ha vendas para exibir\nPressione ENTER para voltar...");
+                Console.WriteLine("\nNão há vendas para exibir.");
+                Console.WriteLine("\nPressione ENTER para voltar...");
                 Console.ReadLine();
                 return;
             }
 
-            string[] dados = File.ReadAllLines(caminho.ArquivoVenda);
+            List<Venda> dados = new List<Venda>();
+
+            using (var conexao = Configuracao.Conexao())
+            {
+                string sql = $"SELECT ID, CPF_Cliente, Data_Venda, Valor_Total FROM dbo.Venda";
+
+                conexao.Open();
+
+                using (SqlCommand cmd = new(sql, conexao))
+                {
+                    try
+                    {
+                        SqlDataReader dado = cmd.ExecuteReader();
+
+                        while (dado.Read())
+                        {
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(2).ToString()).ToString("dd/MM/yyyy"), out DateTime dataVenda);
+
+                            dados.Add(new Venda((int)dado.GetValue(0), (string)dado.GetValue(1), dataVenda, (decimal)dado.GetValue(3)));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Exception: " + ex.Message);
+                    }
+                    finally
+                    {
+                        conexao.Close();
+                    }
+                }
+            }
 
             var i = 0;
             string choice;
@@ -128,35 +182,31 @@ namespace VendasProdutos
 
             do
             {
-                string idVenda = dados[i].Substring(0, 5);
-                string cpf = dados[i].Substring(5, 11);
-                string data = dados[i].Substring(16, 8);
-                string vtotal = dados[i].Substring(24, 7);
-
-                DateTime.TryParse(data.Insert(2, "/").Insert(5, "/"), out DateTime dt);
-
-                Venda venda = new Venda(int.Parse(idVenda), cpf.Insert(3, ".").Insert(7, ".").Insert(11, "-"), dt, Decimal.Parse(vtotal.Insert(vtotal.Length - 2, ",")));
+                Venda venda = new Venda(dados[i].Id, dados[i].Cliente, dados[i].DataVenda, dados[i].ValorTotal);
 
                 Cliente cliente = Read.ProcuraCliente(venda.Cliente);
 
-                List<ItemVenda> itens = itemVenda.Localizar(venda.Id);
+                List<ItemVenda> itens = ItemVenda.Localizar(venda.Id);
 
                 Console.Clear();
                 Console.WriteLine("----------------------------------------------------------");
                 Console.WriteLine("                           CLIENTE                        ");
                 Console.WriteLine("----------------------------------------------------------");
-                Console.WriteLine($"Nome:\t\t{cliente.Nome.TrimStart(' ')}");
-                Console.WriteLine($"CPF:\t\t{cliente.CPF.Insert(3, ".").Insert(7, ".").Insert(11, "-")}");
-                Console.WriteLine($"Data Nasc.:\t{cliente.DataNascimento.ToString("dd/MM/yyyy")}");
-                Console.WriteLine($"Ultima Compra:\t{cliente.UltimaVenda.ToString("dd/MM/yyyy")}");
+                Console.WriteLine($"Nome:\t\t{cliente.Nome}");
+                Console.WriteLine($"CPF:\t\t{cliente.CPF}");
+                Console.WriteLine($"Ultima Compra:\t{cliente.UltimaVenda:dd/MM/yyyy}");
                 Console.WriteLine("\n\n----------------------------------------------------------");
-                Console.WriteLine($"Venda Nº {venda.Id.ToString().PadLeft(5, '0')}\t\t\tData: {venda.DataVenda.ToString("dd/MM/yyyy")}");
+                Console.WriteLine($"Venda Nº {venda.Id.ToString().PadLeft(5, '0')}\t\t\tData: {venda.DataVenda:dd/MM/yyyy}");
                 Console.WriteLine("----------------------------------------------------------");
                 Console.WriteLine("Id\tProduto\t\tQtd\tV.Unitário\tT.Item");
                 Console.WriteLine("----------------------------------------------------------");
-                itens.ForEach(item => Console.WriteLine(item.ToString()));
+                itens.ForEach(item =>
+                {
+                    Produto produto = Produto.RetornaProduto(item.Produto);
+                    ItemVenda.Impressao(item, produto);
+                });
                 Console.WriteLine("----------------------------------------------------------");
-                Console.WriteLine($"\t\t\t\t\t\t{venda.ValorTotal.ToString("#.00")}");
+                Console.WriteLine($"\t\t\t\t\t\t{venda.ValorTotal}");
 
                 Console.WriteLine("\n\n");
                 Console.WriteLine("1 - Proximo\t2 - Anterior\t3 - Primeiro\t4 - Ultimo\t0 - Cancelar");
@@ -165,8 +215,8 @@ namespace VendasProdutos
                 switch (choice)
                 {
                     case "1":
-                        if (i == dados.Length - 1)
-                            i = dados.Length - 1;
+                        if (i == dados.Count - 1)
+                            i = dados.Count - 1;
                         else
                             i++;
                         break;
@@ -183,7 +233,7 @@ namespace VendasProdutos
                         break;
 
                     case "4":
-                        i = dados.Length - 1;
+                        i = dados.Count - 1;
                         break;
                     case "0":
                         break;

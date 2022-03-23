@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using BancoDados;
+using System.Data.SqlClient;
 
 namespace CadastrosBasicos
 {
@@ -81,7 +83,7 @@ namespace CadastrosBasicos
             } while (escolha != "0");
         }
 
-        public void Cadastrar()
+        public static void Cadastrar()
         {
             MPrima MPrima = new MPrima();
 
@@ -93,29 +95,29 @@ namespace CadastrosBasicos
             {
                 Console.Clear();
                 Console.WriteLine("\n Cadastro de Materia-prima\n");
-                Console.Write(" Nome: ");
+                Console.Write("Nome: ");
                 nomeTemp = Console.ReadLine();
-                Console.Write(" Situacao (A / I): ");
+                Console.Write("Situacao (A / I): ");
                 sit = char.Parse(Console.ReadLine().ToUpper());
 
                 if (nomeTemp == null)
                 {
-                    Console.WriteLine(" Nenhum campo podera ser vazio.");
-                    Console.WriteLine(" Pressione ENTER para voltar ao cadastro.");
+                    Console.WriteLine("\n Nenhum campo podera ser vazio.");
+                    Console.WriteLine("\n Pressione ENTER para voltar ao cadastro...");
                     Console.ReadKey();
                 }
                 else
                 {
                     if (nomeTemp.Length > 20)
                     {
-                        Console.WriteLine(" Nome invalido. Digite apenas 20 caracteres.");
-                        Console.WriteLine(" Pressione ENTER para voltar ao cadastro.");
+                        Console.WriteLine("\n Nome inválido. Digite apenas 20 caracteres.");
+                        Console.WriteLine("\n Pressione ENTER para voltar ao cadastro...");
                         Console.ReadKey();
                     }
                     else if ((sit != 'A') && (sit != 'I'))
                     {
-                        Console.WriteLine(" Situacao invalida.");
-                        Console.WriteLine(" Pressione ENTER para voltar ao cadastro.");
+                        Console.WriteLine("\n Situação inválida.");
+                        Console.WriteLine("\n Pressione ENTER para voltar ao cadastro...");
                         Console.ReadKey();
                     }
                     else
@@ -130,7 +132,7 @@ namespace CadastrosBasicos
                         GravarMateriaPrima(MPrima);
 
                         Console.WriteLine("\n Cadastro de Materia-prima concluido com sucesso!\n");
-                        Console.WriteLine("\n Pressione ENTER para voltar ao menu");
+                        Console.WriteLine("\n Pressione ENTER para voltar ao menu...");
                         Console.ReadKey();
                     }
                 }
@@ -138,83 +140,63 @@ namespace CadastrosBasicos
             } while (flag);
         }
 
-        public void GravarMateriaPrima(MPrima mprima)
+        public static void GravarMateriaPrima(MPrima mprima)
         {
-            string caminhoFinal = Path.Combine(Directory.GetCurrentDirectory(), "DataBase");
-            Directory.CreateDirectory(caminhoFinal);
+            _ = DateTime.TryParse(mprima.UltimaCompra.ToString("yyyy-MM-dd"), out DateTime UltimaCompra);
+            _ = DateTime.TryParse(mprima.DataCadastro.ToString("yyyy-MM-dd"), out DateTime DataCadastro);
 
-            string arquivoFinal = Path.Combine(caminhoFinal, "Materia.dat");
+            _ = new Configuracao();
 
-            string idMPrima = Path.Combine(caminhoFinal, "IdMPrima.dat");
-
-            int codAtual = 0;
+            using var conexao = Configuracao.Conexao();
 
             try
             {
-                if (!File.Exists(idMPrima))
-                {
-                    using (StreamWriter sw = new StreamWriter(idMPrima))
-                    {
-                        sw.WriteLine("MP0000");
-                    }
-                }
-                else
-                {
-                    string line;
-                    using (StreamReader sr = new StreamReader(idMPrima))
-                    {
-                        line = sr.ReadLine();
-                    }
+                conexao.Open();
+                string sql = $"INSERT INTO dbo.MateriaPrima (Nome, Ultima_Compra, Data_Cadastro, Situacao) VALUES  ('{mprima.Nome}', '{UltimaCompra}', '{DataCadastro}', '{mprima.Situacao}')";
 
-                    codAtual = int.Parse(line.Substring(2, 4));
-                }
+                SqlCommand cmd = new SqlCommand(sql, conexao);
+                _ = cmd.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
-                Console.WriteLine(" Ex -> " + ex.Message);
+                Console.WriteLine("Exception: " + ex.Message);
+                Console.ReadKey();
             }
-
-            codAtual++;
-            mprima.Id = "MP" + codAtual.ToString("0000");
-
-            try
+            finally
             {
-                using (StreamWriter sw = new StreamWriter(idMPrima))
-                {
-                    sw.WriteLine(mprima.Id);
-                }
-
-                if (!File.Exists(arquivoFinal))
-                {
-                    using (StreamWriter sw = new StreamWriter(arquivoFinal))
-                    {
-                        sw.WriteLine(mprima.ToString());
-                    }
-                }
-                else
-                {
-                    using (StreamWriter sw = new StreamWriter(arquivoFinal, append: true))
-                    {
-                        sw.WriteLine(mprima.ToString());
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Ex -> " + ex.Message);
+                conexao.Close();
             }
         }
 
-        public void Localizar()
+        public static void Localizar()
         {
-            string cod, mPrima;
+            MPrima mPrima;
+
+            string cod;
 
             Console.Clear();
             Console.WriteLine("\n Localizar Materia-prima");
             Console.Write("\n Digite o codigo da materia-prima: ");
-            cod = Console.ReadLine();
+            cod = Console.ReadLine().ToUpper();
 
-            mPrima = Buscar(cod);
+            if (cod.Length != 6)
+            {
+                Console.WriteLine("\n Código inválido. Código composto de 6 digitos");
+                Console.WriteLine("\n Pressione ENTER para voltar...");
+                Console.ReadKey();
+                return;
+            }
+            else if (cod.Substring(0, 2) != "MP")
+            {
+                Console.WriteLine("\n Código inválido. Código inicia com MP");
+                Console.WriteLine("\n Pressione ENTER para voltar...");
+                Console.ReadKey();
+                return;
+            }
+
+            string codN = cod.Substring(2, 4).ToString().TrimStart('0');
+
+            mPrima = Buscar(codN);
 
             if (mPrima == null)
             {
@@ -224,67 +206,94 @@ namespace CadastrosBasicos
             }
             else
             {
-                string situacao = mPrima.Substring(42, 1);
+                string situacao = mPrima.Situacao.ToString();
                 if (situacao == "A")
                     situacao = "Ativo";
                 else if (situacao == "I")
                     situacao = "Inativo";
 
                 Console.WriteLine("\n A materia-prima foi encontrada.\n");
-                Console.WriteLine($" Codigo: {mPrima.Substring(0, 6)}");
-                Console.WriteLine($" Nome: {mPrima.Substring(6, 20)}");
-                Console.WriteLine($" Data ultima compra: {mPrima.Substring(26, 8).Insert(2, "/").Insert(5, "/")}");
-                Console.WriteLine($" Data do cadastro: {mPrima.Substring(34, 8).Insert(2, "/").Insert(5, "/")}");
+                Console.WriteLine($" Codigo: MP{mPrima.Id}");
+                Console.WriteLine($" Nome: {mPrima.Nome}");
+                Console.WriteLine($" Data ultima compra: {mPrima.UltimaCompra:dd/MM/yyyy}");
+                Console.WriteLine($" Data do cadastro: {mPrima.DataCadastro:dd/MM/yyyy}");
                 Console.WriteLine($" Situacao: {situacao}");
-                Console.WriteLine("\n Pressione ENTER para voltar ao menu");
+                Console.WriteLine("\n Pressione ENTER para voltar ao menu...");
                 Console.ReadKey();
             }
         }
 
-        public string Buscar(string cod, bool remover = false)
+        public static MPrima Buscar(string cod)
         {
-            string caminhoFinal = Path.Combine(Directory.GetCurrentDirectory(), "DataBase");
-            Directory.CreateDirectory(caminhoFinal);
+            MPrima mprima = null;
 
-            string arquivoFinal = Path.Combine(caminhoFinal, "Materia.dat");
-            string mPrima = null;
+            _ = new Configuracao();
 
-            if (File.Exists(arquivoFinal))
+            using (var conexao = Configuracao.Conexao())
             {
-                try
+                string sql = $"SELECT Codigo, Nome, Ultima_Compra, Data_Cadastro, Situacao FROM dbo.MateriaPrima WHERE Codigo='{cod}'";
+
+                conexao.Open();
+
+                using (SqlCommand cmd = new(sql, conexao))
                 {
-                    using (StreamReader sr = new StreamReader(arquivoFinal))
+                    try
                     {
-                        string line = sr.ReadLine();
-                        do
+                        SqlDataReader dado = cmd.ExecuteReader();
+
+                        while (dado.Read())
                         {
-                            if (line.Substring(0, 6) == cod)
-                                mPrima = line;
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(2).ToString()).ToString("dd/MM/yyyy"), out DateTime ultimaCompra);
+                            _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(3).ToString()).ToString("dd/MM/yyyy"), out DateTime dataCadastro);
 
-                            line = sr.ReadLine();
 
-                        } while (line != null);
+
+                            mprima = new MPrima(dado.GetValue(0).ToString().PadLeft(4, '0'), (string)dado.GetValue(1), ultimaCompra, dataCadastro, char.Parse((string)dado.GetValue(4)));
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Exception: " + ex.Message);
+                    }
+                    finally
+                    {
+                        conexao.Close();
                     }
                 }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Ex ->" + ex.Message);
-                }
             }
-            return mPrima;
+
+            return mprima;
         }
 
-        public void AlterarSituacao()
+        public static void AlterarSituacao()
         {
-            string cod, mPrima, situacao;
+            MPrima mPrima;
+            string cod, situacao;
             bool flag = true;
 
             Console.Clear();
             Console.WriteLine("\n Alterar Materia-prima");
             Console.Write("\n Digite o codigo da materia-prima: ");
-            cod = Console.ReadLine();
+            cod = Console.ReadLine().ToUpper();
 
-            mPrima = Buscar(cod);
+            if (cod.Length != 6)
+            {
+                Console.WriteLine("\n Código inválido. Código composto de 6 digitos");
+                Console.WriteLine("\n Pressione ENTER para voltar...");
+                Console.ReadKey();
+                return;
+            }
+            else if (cod.Substring(0, 2) != "MP")
+            {
+                Console.WriteLine("\n Código inválido. Código inicia com MP");
+                Console.WriteLine("\n Pressione ENTER para voltar...");
+                Console.ReadKey();
+                return;
+            }
+
+            string codN = cod.Substring(2, 4).ToString().TrimStart('0');
+
+            mPrima = Buscar(codN);
 
             if (mPrima == null)
             {
@@ -294,17 +303,17 @@ namespace CadastrosBasicos
             }
             else
             {
-                situacao = mPrima.Substring(42, 1);
+                situacao = mPrima.Situacao.ToString();
                 if (situacao == "A")
                     situacao = "Ativo";
                 else if (situacao == "I")
                     situacao = "Inativo";
 
                 Console.WriteLine("\n A materia-prima foi encontrada.\n");
-                Console.WriteLine($" Codigo: {mPrima.Substring(0, 6)}");
-                Console.WriteLine($" Nome: {mPrima.Substring(6, 20)}");
-                Console.WriteLine($" Data ultima compra: {mPrima.Substring(26, 8).Insert(2, "/").Insert(5, "/")}");
-                Console.WriteLine($" Data do cadastro: {mPrima.Substring(34, 8).Insert(2, "/").Insert(5, "/")}");
+                Console.WriteLine($" Codigo: MP{mPrima.Id}");
+                Console.WriteLine($" Nome: {mPrima.Nome}");
+                Console.WriteLine($" Data ultima compra: {mPrima.UltimaCompra:dd/MM/yyyy}");
+                Console.WriteLine($" Data do cadastro: {mPrima.DataCadastro:dd/MM/yyyy}");
                 Console.WriteLine($" Situacao: {situacao}");
 
                 do
@@ -325,13 +334,14 @@ namespace CadastrosBasicos
 
                 } while (flag);
 
-                Atualizar(cod, null, situacao);
+                Atualizar(codN, null, situacao);
             }
         }
 
-        public void Atualizar(string cod, string dataUltimaCompra = null, string situacaoAtualizada = null)
+        public static void Atualizar(string cod, string dataUltimaCompra = null, string situacaoAtualizada = null)
         {
-            string mPrima;
+            MPrima mPrima;
+
             mPrima = Buscar(cod);
 
             if (mPrima == null)
@@ -342,69 +352,224 @@ namespace CadastrosBasicos
             }
             else
             {
-                string caminhoFinal = Path.Combine(Directory.GetCurrentDirectory(), "DataBase");
-                Directory.CreateDirectory(caminhoFinal);
+                _ = new Configuracao();
 
-                string arquivoFinal = Path.Combine(caminhoFinal, "Materia.dat");
+                using var conexao = Configuracao.Conexao();
 
-                List<string> MPrimas = new List<string>();
-                string novaMPrima = null;
+                string sql = $"UPDATE dbo.MateriaPrima SET ";
 
-                if (File.Exists(arquivoFinal))
+                if (situacaoAtualizada != null)
+                    sql += $"Situacao = '{situacaoAtualizada}' ";
+
+                if (dataUltimaCompra != null)
                 {
-                    try
-                    {
-                        using (StreamReader sr = new StreamReader(arquivoFinal))
-                        {
-                            string line = sr.ReadLine();
-                            do
-                            {
-                                if (line.Substring(0, 6) != cod)
-                                    MPrimas.Add(line);
-
-                                line = sr.ReadLine();
-
-                            } while (line != null);
-                        }
-
-                        File.Delete(arquivoFinal);
-
-                        if (dataUltimaCompra != null)
-                        {
-                            novaMPrima = mPrima.Substring(0, 6)
-                                + mPrima.Substring(6, 20)
-                                + dataUltimaCompra.Replace("/", "")
-                                + mPrima.Substring(34, 8)
-                                + mPrima.Substring(42, 1);
-                        }
-                        else if (situacaoAtualizada != null)
-                        {
-                            novaMPrima = mPrima.Substring(0, 6)
-                                + mPrima.Substring(6, 20)
-                                + mPrima.Substring(26, 8)
-                                + mPrima.Substring(34, 8)
-                                + situacaoAtualizada;
-                        }
-
-                        using (StreamWriter sw = new StreamWriter(arquivoFinal))
-                        {
-                            MPrimas.ForEach(mprima => sw.WriteLine(mprima));
-                            sw.WriteLine(novaMPrima);
-                        }
-
-                        Console.WriteLine("\n Materia-prima alterada.");
-                        Console.WriteLine("\n Pressione ENTER para voltar ao menu");
-                        Console.ReadKey();
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine("Ex ->" + ex.Message);
-                    }
+                    _ = DateTime.TryParse(DateTime.Parse(dataUltimaCompra).ToString("yyyy-MM-dd"), out DateTime ultimaCompra);
+                    sql += $"Ultima_Venda = CONVERT(DATE, '{ultimaCompra}') ";
                 }
+
+                sql += $"WHERE Codigo='{cod}'";
+
+                try
+                {
+                    conexao.Open();
+
+                    SqlCommand cmd = new SqlCommand(sql, conexao);
+                    _ = cmd.ExecuteNonQuery();
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("Exception: " + ex.Message);
+                    Console.ReadKey();
+                }
+                finally
+                {
+                    conexao.Close();
+                }
+
             }
         }
 
-        public string Impressao(MPrima mPrima)
+
+        public static bool VerificaListaMPrima()
+        {
+            int registros = 0;
+
+            _ = new Configuracao();
+
+            using (var conexao = Configuracao.Conexao())
+            {
+                string sql = $"SELECT COUNT(Codigo) FROM dbo.MateriaPrima";
+
+                conexao.Open();
+
+                using (SqlCommand cmd = new(sql, conexao))
+                {
+                    try
+                    {
+                        cmd.ExecuteNonQuery();
+                        registros = (int)cmd.ExecuteScalar();
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("Exception: " + ex.Message);
+                    }
+                    finally
+                    {
+                        conexao.Close();
+                    }
+                }
+            }
+
+            return registros != 0;
+        }
+
+        public static void ImprimirMPrimas()
+        {
+            List<MPrima> mPrimas = new List<MPrima>();
+
+            if (VerificaListaMPrima())
+            {
+                _ = new Configuracao();
+
+                using (var conexao = Configuracao.Conexao())
+                {
+                    string sql = $"SELECT Codigo, Nome, Ultima_Compra, Data_Cadastro, Situacao FROM dbo.MateriaPrima";
+
+                    conexao.Open();
+
+                    using (SqlCommand cmd = new(sql, conexao))
+                    {
+                        try
+                        {
+                            SqlDataReader dado = cmd.ExecuteReader();
+
+                            while (dado.Read())
+                            {
+                                _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(2).ToString()).ToString("dd/MM/yyyy"), out DateTime ultimaCompra);
+                                _ = DateTime.TryParse(DateTime.Parse(dado.GetValue(3).ToString()).ToString("dd/MM/yyyy"), out DateTime dataCadastro);
+
+                                mPrimas.Add(new MPrima(dado.GetValue(0).ToString().PadLeft(4, '0'), (string)dado.GetValue(1), ultimaCompra, dataCadastro, char.Parse((string)dado.GetValue(4))));
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            Console.WriteLine("Exception: " + ex.Message);
+                        }
+                        finally
+                        {
+                            conexao.Close();
+                        }
+                    }
+                }
+
+
+
+                string escolha;
+                int opcao = 1, posicao = 0;
+                bool flag = true;
+
+                do
+                {
+                    if ((opcao < 1) || (opcao > 5))
+                    {
+                        Console.WriteLine("\n Opção inválida.");
+                        Console.WriteLine("\n Pressione ENTER para voltar.");
+                        Console.ReadKey();
+                        opcao = 1;
+                    }
+                    else
+                    {
+                        if (opcao == 5)
+                        {
+                            flag = false;
+                            return;
+                        }
+                        else if (opcao == 1)
+                        {
+                            Console.Clear();
+                            Console.WriteLine("\n Impressão de Materias-primas");
+                            Console.WriteLine(" --------------------------- ");
+                            posicao = mPrimas.IndexOf(mPrimas.First());
+                            Console.WriteLine($"\n Materia-prima {posicao + 1}");
+                            Console.WriteLine(Impressao(mPrimas.First()));
+                        }
+                        else if (opcao == 4)
+                        {
+                            Console.Clear();
+                            Console.WriteLine("\n Impressão de Materias-primas");
+                            Console.WriteLine(" --------------------------- ");
+                            posicao = mPrimas.IndexOf(mPrimas.Last());
+                            Console.WriteLine($"\n Materia-prima {posicao + 1}");
+                            Console.WriteLine(Impressao(mPrimas.Last()));
+                        }
+                        else if (opcao == 2)
+                        {
+                            if (posicao == 0)
+                            {
+                                Console.Clear();
+                                Console.WriteLine("\n Impressão de Materias-primas");
+                                Console.WriteLine(" --------------------------- ");
+                                Console.WriteLine("\n Não há materia-prima anterior.\n");
+                                Console.WriteLine(" --------------------------- ");
+                                posicao = mPrimas.IndexOf(mPrimas.First());
+                                Console.WriteLine($"\n Materia-prima {posicao + 1}");
+                                Console.WriteLine(Impressao(mPrimas.First()));
+                            }
+                            else
+                            {
+                                Console.Clear();
+                                Console.WriteLine("\n Impressão de Materias-primas");
+                                Console.WriteLine(" --------------------------- ");
+                                posicao--;
+                                Console.WriteLine($"\n Materia-prima {posicao + 1}");
+                                Console.WriteLine(Impressao(mPrimas[posicao]));
+                                posicao = mPrimas.IndexOf(mPrimas[posicao]);
+                            }
+                        }
+                        else if (opcao == 3)
+                        {
+                            if (posicao == mPrimas.IndexOf(mPrimas.Last()))
+                            {
+                                Console.Clear();
+                                Console.WriteLine("\n Impressão de Materias-primas");
+                                Console.WriteLine(" --------------------------- ");
+                                Console.WriteLine("\n Não há proxima materia-prima.\n");
+                                Console.WriteLine(" --------------------------- ");
+                                Console.WriteLine($"\n Materia-prima {posicao + 1}");
+                                Console.WriteLine(Impressao(mPrimas.Last()));
+                                posicao = mPrimas.IndexOf(mPrimas.Last());
+                            }
+                            else
+                            {
+                                Console.Clear();
+                                Console.WriteLine("\n Impressão de Materias-primas");
+                                Console.WriteLine(" --------------------------- ");
+                                posicao++;
+                                Console.WriteLine($"\n Materia-prima {posicao + 1}");
+                                Console.WriteLine(Impressao(mPrimas[posicao]));
+                                posicao = mPrimas.IndexOf(mPrimas[posicao]);
+                            }
+                        }
+
+                        Console.WriteLine(" ------------------------------------------------------------------ ");
+                        Console.WriteLine("\n Navegação\n");
+                        Console.WriteLine(" 1 - Primeira / 2 - Anterior / 3 - Proxima / 4 - Ultima / 5 - Sair");
+                        Console.Write("\n Escolha: ");
+                        escolha = Console.ReadLine();
+                        _ = int.TryParse(escolha, out opcao);
+                    }
+
+                } while (flag);
+            }
+            else
+            {
+                Console.WriteLine("\n Não há matérias-primas cadastradas.\n");
+                Console.WriteLine("\n Pressione ENTER para voltar...");
+                Console.ReadKey();
+            }
+        }
+
+        public static string Impressao(MPrima mPrima)
         {
             string situacao = "";
             if (mPrima.Situacao == 'A')
@@ -421,153 +586,7 @@ namespace CadastrosBasicos
                 + "\n";
         }
 
-        public void ImprimirMPrimas()
-        {
-            string caminhoFinal = Path.Combine(Directory.GetCurrentDirectory(), "DataBase");
-            Directory.CreateDirectory(caminhoFinal);
-
-            string arquivoFinal = Path.Combine(caminhoFinal, "Materia.dat");
-
-            List<MPrima> MPrimas = new List<MPrima>();
-
-            if (File.Exists(arquivoFinal))
-            {
-                try
-                {
-                    using (StreamReader sr = new StreamReader(arquivoFinal))
-                    {
-                        string line = sr.ReadLine();
-                        do
-                        {
-                            if (line.Substring(42, 1) != "I")
-                            {
-                                MPrimas.Add(
-                                    new MPrima(
-                                        line.Substring(0, 6),
-                                        line.Substring(6, 20),
-                                        Convert.ToDateTime(line.Substring(26, 8).Insert(2, "/").Insert(5, "/")).Date,
-                                        Convert.ToDateTime(line.Substring(34, 8).Insert(2, "/").Insert(5, "/")).Date,
-                                        Convert.ToChar(line.Substring(42, 1))
-                                        )
-                                    );
-                            }
-                            line = sr.ReadLine();
-
-                        } while (line != null);
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Console.WriteLine("Ex ->" + ex.Message);
-                }
-
-
-                string escolha;
-                int opcao = 1, posicao = 0;
-                bool flag = true;
-
-                do
-                {
-                    if ((opcao < 1) || (opcao > 5))
-                    {
-                        Console.WriteLine("\n Opcao invalida.");
-                        Console.WriteLine("\n Pressione ENTER para voltar.");
-                        Console.ReadKey();
-                        opcao = 1;
-                    }
-                    else
-                    {
-                        if (opcao == 5)
-                        {
-                            flag = false;
-                            return;
-                        }
-                        else if (opcao == 1)
-                        {
-                            Console.Clear();
-                            Console.WriteLine("\n Impressao de Materias-primas");
-                            Console.WriteLine(" --------------------------- ");
-                            posicao = MPrimas.IndexOf(MPrimas.First());
-                            Console.WriteLine($"\n Materia-prima {posicao + 1}");
-                            Console.WriteLine(Impressao(MPrimas.First()));
-                        }
-                        else if (opcao == 4)
-                        {
-                            Console.Clear();
-                            Console.WriteLine("\n Impressao de Materias-primas");
-                            Console.WriteLine(" --------------------------- ");
-                            posicao = MPrimas.IndexOf(MPrimas.Last());
-                            Console.WriteLine($"\n Materia-prima {posicao + 1}");
-                            Console.WriteLine(Impressao(MPrimas.Last()));
-                        }
-                        else if (opcao == 2)
-                        {
-                            if (posicao == 0)
-                            {
-                                Console.Clear();
-                                Console.WriteLine("\n Impressao de Materias-primas");
-                                Console.WriteLine(" --------------------------- ");
-                                Console.WriteLine("\n Nao ha materia-prima anterior.\n");
-                                Console.WriteLine(" --------------------------- ");
-                                posicao = MPrimas.IndexOf(MPrimas.First());
-                                Console.WriteLine($"\n Materia-prima {posicao + 1}");
-                                Console.WriteLine(Impressao(MPrimas.First()));
-                            }
-                            else
-                            {
-                                Console.Clear();
-                                Console.WriteLine("\n Impressao de Materias-primas");
-                                Console.WriteLine(" --------------------------- ");
-                                posicao--;
-                                Console.WriteLine($"\n Materia-prima {posicao + 1}");
-                                Console.WriteLine(Impressao(MPrimas[posicao]));
-                                posicao = MPrimas.IndexOf(MPrimas[posicao]);
-                            }
-                        }
-                        else if (opcao == 3)
-                        {
-                            if (posicao == MPrimas.IndexOf(MPrimas.Last()))
-                            {
-                                Console.Clear();
-                                Console.WriteLine("\n Impressao de Materias-primas");
-                                Console.WriteLine(" --------------------------- ");
-                                Console.WriteLine("\n Nao ha proxima materia-prima.\n");
-                                Console.WriteLine(" --------------------------- ");
-                                Console.WriteLine($"\n Materia-prima {posicao + 1}");
-                                Console.WriteLine(Impressao(MPrimas.Last()));
-                                posicao = MPrimas.IndexOf(MPrimas.Last());
-                            }
-                            else
-                            {
-                                Console.Clear();
-                                Console.WriteLine("\n Impressao de Materias-primas");
-                                Console.WriteLine(" --------------------------- ");
-                                posicao++;
-                                Console.WriteLine($"\n Materia-prima {posicao + 1}");
-                                Console.WriteLine(Impressao(MPrimas[posicao]));
-                                posicao = MPrimas.IndexOf(MPrimas[posicao]);
-                            }
-                        }
-
-                        Console.WriteLine(" ------------------------------------------------------------------ ");
-                        Console.WriteLine("\n Navegacao\n");
-                        Console.WriteLine(" 1 - Primeira / 2 - Anterior / 3 - Proxima / 4 - Ultima / 5 - Sair");
-                        Console.Write("\n Escolha: ");
-                        escolha = Console.ReadLine();
-                        int.TryParse(escolha, out opcao);
-                    }
-
-                } while (flag);
-            }
-            else
-            {
-                Console.WriteLine("\n Nao ha materias-primas cadastradas\n");
-                Console.WriteLine("\n Pressione ENTER para voltar");
-                Console.ReadKey();
-            }
-        }
-
-        public MPrima RetornaMateriaPrima(string cod)
+        public static MPrima RetornaMateriaPrima(string cod)
         {
             string caminhoFinal = Path.Combine(Directory.GetCurrentDirectory(), "DataBase");
             Directory.CreateDirectory(caminhoFinal);
@@ -596,7 +615,7 @@ namespace CadastrosBasicos
                                         );
 
                             line = sr.ReadLine();
-                     } while (line != null);
+                        } while (line != null);
                     }
                 }
                 catch (Exception ex)

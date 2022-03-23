@@ -14,10 +14,10 @@ namespace BancoDados
 
         public Configuracao(string dataSource = null, string database = null, string username = null, string password = null)
         {
-            DataSource  = string.IsNullOrWhiteSpace(dataSource)?    "src"    : dataSource;
-            Database    = string.IsNullOrWhiteSpace(database)?      "base"   : database;
-            Username    = string.IsNullOrWhiteSpace(username)?      "user"   : username;
-            Password    = string.IsNullOrWhiteSpace(password)?      "pass"   : password;
+            DataSource = string.IsNullOrWhiteSpace(dataSource) ? "DESKTOP-1UCK7M9" : dataSource;
+            Database = string.IsNullOrWhiteSpace(database) ? "Biltiful" : database;
+            Username = string.IsNullOrWhiteSpace(username) ? "sa" : username;
+            Password = string.IsNullOrWhiteSpace(password) ? "123456" : password;
 
             ConnString = @"Data Source=" + DataSource + ";Initial Catalog="
                             + Database + ";Persist Security Info=True;User ID=" + Username + ";Password=" + Password;
@@ -25,6 +25,8 @@ namespace BancoDados
 
         public static SqlConnection Conexao()
         {
+            _ = new Configuracao();   
+
             try
             {
                 SqlConnection conexao = new(ConnString);

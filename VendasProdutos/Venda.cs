@@ -29,11 +29,6 @@ namespace VendasProdutos
             ValorTotal = vTotal;
         }
 
-        public override string ToString()
-        {
-            return $"Venda Nº {Id.ToString().PadLeft(5, '0')}\tData: {DataVenda:dd/MM/yyyy}\nCliente: {Cliente}\nTotal da Venda: {ValorTotal.ToString("00000.00").TrimStart('0')}";
-        }
-
         public int Cadastrar()
         {
             int idVenda = 0;
@@ -182,6 +177,7 @@ namespace VendasProdutos
 
             do
             {
+                Produto produto;
                 Venda venda = new Venda(dados[i].Id, dados[i].Cliente, dados[i].DataVenda, dados[i].ValorTotal);
 
                 Cliente cliente = Read.ProcuraCliente(venda.Cliente);
@@ -198,11 +194,11 @@ namespace VendasProdutos
                 Console.WriteLine("\n\n----------------------------------------------------------");
                 Console.WriteLine($"Venda Nº {venda.Id.ToString().PadLeft(5, '0')}\t\t\tData: {venda.DataVenda:dd/MM/yyyy}");
                 Console.WriteLine("----------------------------------------------------------");
-                Console.WriteLine("Id\tProduto\t\tQtd\tV.Unitário\tT.Item");
+                Console.WriteLine("\n\nProduto\t\t\tQtd\tV.Unitário\tT.Item");
                 Console.WriteLine("----------------------------------------------------------");
                 itens.ForEach(item =>
                 {
-                    Produto produto = Produto.RetornaProduto(item.Produto);
+                    produto = Produto.RetornaProduto(item.Produto);
                     ItemVenda.Impressao(item, produto);
                 });
                 Console.WriteLine("----------------------------------------------------------");

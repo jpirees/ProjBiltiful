@@ -256,7 +256,7 @@ namespace VendasProdutos
 
                 cliente.UltimaVenda = venda.DataVenda;
 
-                //new Write().EditarCliente(cliente);
+                Write.EditarCliente(cliente);
 
                 Console.WriteLine("\n\nVenda cadastrada com sucesso!\nPressione ENTER para voltar ao Menu Vendas...");
 
@@ -268,6 +268,7 @@ namespace VendasProdutos
         {
             Console.Clear();
 
+            Produto produto;
             Venda venda = new Venda();
             ItemVenda itemVenda = new ItemVenda();
 
@@ -292,9 +293,13 @@ namespace VendasProdutos
                 Console.WriteLine("\n\n----------------------------------------------------------");
                 Console.WriteLine($"Venda Nº {venda.Id.ToString().PadLeft(5, '0')}\t\t\tData: {venda.DataVenda.ToString("dd/MM/yyyy")}");
                 Console.WriteLine("----------------------------------------------------------");
-                Console.WriteLine("Id\tProduto\t\tQtd\tV.Unitário\tT.Item");
+                Console.WriteLine("\n\nProduto\t\t\tQtd\tV.Unitário\tT.Item");
                 Console.WriteLine("----------------------------------------------------------");
-                itens.ForEach(item => Console.WriteLine(item.ToString()));
+                itens.ForEach(item =>
+                {
+                    produto = Produto.RetornaProduto(item.Produto);
+                    ItemVenda.Impressao(item, produto);
+                });
                 Console.WriteLine("----------------------------------------------------------");
                 Console.WriteLine($"\t\t\t\t\t\t{venda.ValorTotal.ToString("#.00")}");
 

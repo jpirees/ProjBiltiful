@@ -174,7 +174,9 @@ namespace CadastrosBasicos
         public static Fornecedor Editar()
         {
             Fornecedor fornecedor;
-            Console.WriteLine("Somente algumas informacoes podem ser alterada como (Razao social/situacao), caso nao queira alterar alguma informacao pressione enter!");
+            Console.WriteLine(" Somente algumas informações podem ser alterada como: Razão social | Situação");
+            Console.WriteLine(" caso não queira alterar alguma informação pressione ENTER!");
+            Console.WriteLine();
             Console.Write("CNPJ: ");
             string cnpj = Console.ReadLine();
 
@@ -192,7 +194,12 @@ namespace CadastrosBasicos
                 fornecedor.Situacao = flagSituacao == false ? fornecedor.Situacao : situacao;
 
                 Write.EditarFornecedor(fornecedor);
+
+                Console.WriteLine("\n Fornecedor atualizado com sucesso.");
+                Console.WriteLine("\n Pressione ENTER para continuar...");
+                Console.ReadKey();
             }
+
             return fornecedor;
         }
         public static void FornecedorBloqueado()

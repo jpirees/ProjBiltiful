@@ -48,7 +48,7 @@ namespace CadastrosBasicos.ManipulaArquivos
             {
                 conexao.Open();
 
-                string sql = $"UPDATE dbo.Cliente SET Nome='{clienteAtualizado.Nome}', Data_Nasc=CONVERT(DATE,'{DataNascimento}'), '{clienteAtualizado.Situacao}') WHERE CPF='{clienteAtualizado.CPF}'";
+                string sql = $"UPDATE dbo.Cliente SET Nome='{clienteAtualizado.Nome}', Data_Nasc=CONVERT(DATE,'{DataNascimento}'), Situacao='{clienteAtualizado.Situacao}' WHERE CPF='{clienteAtualizado.CPF}'";
                 SqlCommand cmd = new SqlCommand(sql, conexao);
                 _ = cmd.ExecuteNonQuery();
             }
@@ -134,7 +134,7 @@ namespace CadastrosBasicos.ManipulaArquivos
             {
                 conexao.Open();
 
-                string sql = $"UPDATE dbo.Fornecedor SET Razao_Social='{fornecedorAtualizado.RazaoSocial}', '{fornecedorAtualizado.Situacao}') WHERE CNPJ='{fornecedorAtualizado.CNPJ}'";
+                string sql = $"UPDATE dbo.Fornecedor SET Razao_Social='{fornecedorAtualizado.RazaoSocial}', Situacao='{fornecedorAtualizado.Situacao}') WHERE CNPJ='{fornecedorAtualizado.CNPJ}'";
                 SqlCommand cmd = new SqlCommand(sql, conexao);
                 _ = cmd.ExecuteNonQuery();
             }

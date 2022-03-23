@@ -95,8 +95,12 @@ namespace CadastrosBasicos
         }
         public static Cliente Editar()
         {
+            Console.Clear();
             Cliente cliente;
-            Console.WriteLine("Somente algumas informacoes podem ser alterada como (Nome/Data de Nascimento/sexo/Situacao), caso nao queira alterar alguma informacao pressione enter!");
+            Console.WriteLine(" Somente algumas informações podem ser alteradas como: Nome | Data de Nascimento | Situação");
+            Console.WriteLine(" caso não queira alterar alguma informação pressione ENTER!");
+            Console.WriteLine();
+            Console.WriteLine();
             Console.Write("CPF: ");
             string cpf = Console.ReadLine();
 
@@ -114,12 +118,12 @@ namespace CadastrosBasicos
                 bool flagSituacao = char.TryParse(Console.ReadLine().Trim().ToUpper(), out char situacao);
 
                 cliente.Nome = nome == "" ? cliente.Nome : nome;
-                cliente.DataNascimento = flag == false ? cliente.DataCadastro : dNascimento;
-                cliente.Situacao = flagSituacao == false ? cliente.Situacao : situacao;
+                cliente.DataNascimento = !flag? cliente.DataCadastro : dNascimento;
+                cliente.Situacao = !flagSituacao? cliente.Situacao : situacao;
 
                 Write.EditarCliente(cliente);
 
-                Console.WriteLine("\n Cliente cadastrado com sucesso.");
+                Console.WriteLine("\n Cliente atualizado com sucesso.");
                 Console.WriteLine("\n Pressione ENTER para continuar...");
                 Console.ReadKey();
             }

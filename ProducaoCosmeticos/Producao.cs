@@ -13,7 +13,7 @@ namespace ProducaoCosmeticos
         #region Propriedades da Produção
         public string Id { get; set; }
         public string DataProducao { get; set; }
-        public string Produto { get; set; }
+        public string _Produto { get; set; }
         public float Quantidade { get; set; }
         public int Contador { get; set; }
         #endregion
@@ -22,7 +22,7 @@ namespace ProducaoCosmeticos
         {
             Id = id;
             DataProducao = dataProducao;
-            Produto = produto;
+            _Produto = produto;
             Quantidade = quantidade;
             Contador = 1;
         }
@@ -122,14 +122,16 @@ namespace ProducaoCosmeticos
 
                 Console.Write("\nData de produção: " + dataProducao + "\n");
 
+                Produto pproduto;
 
                 do
                 {
+                    pproduto = new Produto();
 
                     Console.Write("Digite o código do produto: ");
                     auxiliarProduto = Console.ReadLine();
 
-                    Produto pproduto = new Produto().RetornaProduto(auxiliarProduto);
+                    pproduto = Produto.RetornaProduto(auxiliarProduto);
 
                     if (pproduto == null)
                     {
@@ -193,7 +195,7 @@ namespace ProducaoCosmeticos
                         Console.Write("Digite o código da matéria prima: ");
                         codigoMateriaPrima = Console.ReadLine();
 
-                        materiaPrima = materiaPrima.RetornaMateriaPrima(codigoMateriaPrima);
+                        materiaPrima = MPrima.RetornaMateriaPrima(codigoMateriaPrima);
 
                         if (materiaPrima == null)
                         {
@@ -576,10 +578,10 @@ namespace ProducaoCosmeticos
 
                         Id = linha.Substring(0, 5);
                         DataProducao = linha.Substring(5, 8).Insert(2, "/").Insert(5, "/");
-                        Produto = linha.Substring(13, 13);
+                        _Produto = linha.Substring(13, 13);
                         Quantidade = float.Parse(linha.Substring(26, 5));
 
-                        Producao producao = new Producao(Id, DataProducao, Produto, Quantidade);
+                        Producao producao = new Producao(Id, DataProducao, _Produto, Quantidade);
 
                         listaProducao.Add(producao);
                         Contador++;
@@ -668,7 +670,7 @@ namespace ProducaoCosmeticos
                 "\n************ Registro de Produção ************\n\n"
                 + "ID: " + Id.ToString().PadLeft(5, '0')
                 + "\nData de produção: " + DataProducao
-                + "\nProduto: " + Produto
+                + "\nProduto: " + _Produto
                 + "\nQuantidade: " + Quantidade.ToString("000.#0").TrimStart('0');
 
         }

@@ -116,7 +116,7 @@ namespace VendasProdutos
                     Console.WriteLine("\nDigite o Código do Produto:");
                     string codProduto = Console.ReadLine();
 
-                    produto = produto.RetornaProduto(codProduto);
+                    produto = Produto.RetornaProduto(codProduto);
 
                     if (produto == null)
                     {

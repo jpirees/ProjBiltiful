@@ -256,7 +256,7 @@ namespace ComprasMateriasPrimas
                 {
                     Console.Write("- Id da Matéria Prima: ");
                     idMP = Console.ReadLine();
-                } while (new MPrima().RetornaMateriaPrima(idMP) == null);
+                } while (MPrima.RetornaMateriaPrima(idMP) == null);
                 float valorUnitario;
                 float quantidade;
                 do

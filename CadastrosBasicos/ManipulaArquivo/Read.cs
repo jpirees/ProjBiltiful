@@ -25,8 +25,6 @@ namespace CadastrosBasicos.ManipulaArquivos
         {
             Cliente cliente = null;
 
-            _ = new Configuracao();
-
             using (var conexao = Configuracao.Conexao())
             {
                 string sql = $"SELECT CPF, Nome, Data_Nasc, Sexo, Ultima_Compra, Data_Cadastro, Situacao, Risco FROM dbo.Cliente WHERE CPF='{cpf}'";
@@ -64,13 +62,11 @@ namespace CadastrosBasicos.ManipulaArquivos
 
         public static bool VerificaListaCliente()
         {
-            int registros = 0;
-
-            _ = new Configuracao();
+            string registros = null;
 
             using (var conexao = Configuracao.Conexao())
             {
-                string sql = $"SELECT COUNT(CPF) AS Registros FROM dbo.Cliente";
+                string sql = $"SELECT MAX(CPF) AS Registros FROM dbo.Cliente";
 
                 conexao.Open();
 
@@ -79,7 +75,7 @@ namespace CadastrosBasicos.ManipulaArquivos
                     try
                     {
                         cmd.ExecuteNonQuery();
-                        registros = (int)cmd.ExecuteScalar();
+                        registros = (string)cmd.ExecuteScalar();
                     }
                     catch (Exception ex)
                     {
@@ -92,14 +88,12 @@ namespace CadastrosBasicos.ManipulaArquivos
                 }
             }
 
-            return registros == 0;
+            return registros == null;
         }
 
         public static List<Cliente> ListaArquivoCliente()
         {
             List<Cliente> clientes = new List<Cliente>();
-
-            _ = new Configuracao();
 
             using (var conexao = Configuracao.Conexao())
             {
@@ -138,10 +132,7 @@ namespace CadastrosBasicos.ManipulaArquivos
 
         public static bool ProcurarCPFBloqueado(string cpf)
         {
-
             Cliente cliente = null;
-
-            _ = new Configuracao();
 
             using (var conexao = Configuracao.Conexao())
             {
@@ -185,8 +176,6 @@ namespace CadastrosBasicos.ManipulaArquivos
         {
             Fornecedor fornecedor = null;
 
-            _ = new Configuracao();
-
             using (var conexao = Configuracao.Conexao())
             {
                 string sql = $"SELECT CNPJ, Razao_Social, Data_Abertura, Ultima_Compra, Data_Cadastro, Situacao, Bloqueio FROM dbo.Fornecedor WHERE CNPJ='{cnpj}'";
@@ -224,13 +213,11 @@ namespace CadastrosBasicos.ManipulaArquivos
 
         public static bool VerificaListaFornecedor()
         {
-            int registros = 0;
-
-            _ = new Configuracao();
+            string registros = null;
 
             using (var conexao = Configuracao.Conexao())
             {
-                string sql = $"SELECT COUNT(CNPJ) AS Registros FROM dbo.Fornecedor";
+                string sql = $"SELECT MAX(CNPJ) AS Registros FROM dbo.Fornecedor";
 
                 conexao.Open();
 
@@ -239,7 +226,7 @@ namespace CadastrosBasicos.ManipulaArquivos
                     try
                     {
                         cmd.ExecuteNonQuery();
-                        registros = (int)cmd.ExecuteScalar();
+                        registros = (string)cmd.ExecuteScalar();
                     }
                     catch (Exception ex)
                     {
@@ -252,14 +239,12 @@ namespace CadastrosBasicos.ManipulaArquivos
                 }
             }
 
-            return registros != 0;
+            return registros != null;
         }
 
         public static List<Fornecedor> ListaArquivoFornecedor()
         {
             List<Fornecedor> fornecedores = new List<Fornecedor>();
-
-            _ = new Configuracao();
 
             using (var conexao = Configuracao.Conexao())
             {
@@ -299,8 +284,6 @@ namespace CadastrosBasicos.ManipulaArquivos
         public static bool ProcurarCNPJBloqueado(string cnpj)
         {
             Fornecedor fornecedor = null;
-
-            _ = new Configuracao();
 
             using (var conexao = Configuracao.Conexao())
             {

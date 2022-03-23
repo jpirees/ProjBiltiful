@@ -97,7 +97,7 @@ namespace CadastrosBasicos
                         break;
 
                     case "3":
-                        new Cliente().Editar();
+                        Cliente.Editar();
                         break;
 
                     case "4":
@@ -121,7 +121,7 @@ namespace CadastrosBasicos
                         Fornecedor.Navegar();
                         break;
                     case "9":
-                        new Fornecedor().Editar();
+                        Fornecedor.Editar();
                         break;
                     case "10":
                         Fornecedor.BloqueiaFornecedor();

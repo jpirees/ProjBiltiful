@@ -17,8 +17,6 @@ namespace CadastrosBasicos.ManipulaArquivos
         {
             _ = DateTime.TryParse(cliente.DataNascimento.ToString("yyyy-MM-dd"), out DateTime DataNascimento);
 
-            _ = new Configuracao();
-
             using var conexao = Configuracao.Conexao();
 
             try
@@ -40,46 +38,33 @@ namespace CadastrosBasicos.ManipulaArquivos
             }
         }
 
-        public void EditarCliente(Cliente clienteAtualizado)
+        public static void EditarCliente(Cliente clienteAtualizado)
         {
+            _ = DateTime.TryParse(clienteAtualizado.DataNascimento.ToString("yyyy-MM-dd"), out DateTime DataNascimento);
+            
+            using var conexao = Configuracao.Conexao();
 
-            Read read = new Read();
-            List<Cliente> clientes = Read.ListaArquivoCliente();
-            int posicao = 0;
             try
             {
+                conexao.Open();
 
-                while (clientes[posicao] != null)
-                {
-                    if (clienteAtualizado.CPF == clientes[posicao].CPF)
-                    {
-                        clientes[posicao] = clienteAtualizado;
-                        break;
-                    }
-                    posicao++;
-                }
-                //File.Delete(CaminhoCadastro);
-                //using (StreamWriter sw = new StreamWriter(CaminhoCadastro))
-                //{
-                //    posicao = 0;
-                //    do
-                //    {
-                //        sw.WriteLine(clientes[posicao].RetornaArquivo());
-                //        posicao++;
-                //    } while (posicao < clientes.Count);
-                //    Console.WriteLine("Registro atualizado");
-                //}
+                string sql = $"UPDATE dbo.Cliente SET Nome='{clienteAtualizado.Nome}', Data_Nasc=CONVERT(DATE,'{DataNascimento}'), '{clienteAtualizado.Situacao}') WHERE CPF='{clienteAtualizado.CPF}'";
+                SqlCommand cmd = new SqlCommand(sql, conexao);
+                _ = cmd.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Ocorreu um erro: " + ex.Message);
+                Console.WriteLine("Exception: " + ex.Message);
+                Console.ReadKey();
+            }
+            finally
+            {
+                conexao.Close();
             }
         }
 
         public static void BloqueiaCliente(string cpf)
         {
-            _ = new Configuracao();
-
             using var conexao = Configuracao.Conexao();
 
             conexao.Open();
@@ -103,7 +88,7 @@ namespace CadastrosBasicos.ManipulaArquivos
 
         public static void DesbloqueiaCliente(string cpf)
         {
-            _ = new Configuracao();
+            
 
             using var conexao = Configuracao.Conexao();
 
@@ -130,8 +115,6 @@ namespace CadastrosBasicos.ManipulaArquivos
         {
             _ = DateTime.TryParse(fornecedor.DataAbertura.ToString("yyyy-MM-dd"), out DateTime DataAbertura);
 
-            _ = new Configuracao();
-
             using var conexao = Configuracao.Conexao();
 
             conexao.Open();
@@ -143,45 +126,31 @@ namespace CadastrosBasicos.ManipulaArquivos
             conexao.Close();
         }
 
-        public void EditarFornecedor(Fornecedor fornecedorAtualizado)
+        public static void EditarFornecedor(Fornecedor fornecedorAtualizado)
         {
-            List<Fornecedor> fornecedores = Read.ListaArquivoFornecedor();
-
-            int posicao = 0;
+            using var conexao = Configuracao.Conexao();
 
             try
             {
-                while (fornecedores[posicao] != null)
-                {
-                    if (fornecedorAtualizado.CNPJ == fornecedores[posicao].CNPJ)
-                    {
-                        fornecedores[posicao] = fornecedorAtualizado;
-                        break;
-                    }
-                    posicao++;
-                }
-                //File.Delete(CaminhoFornecedor);
-                //using (StreamWriter sw = new StreamWriter(CaminhoFornecedor))
-                //{
-                //    posicao = 0;
-                //    do
-                //    {
-                //        sw.WriteLine(fornecedores[posicao].RetornaArquivo());
-                //        posicao++;
-                //    } while (posicao < fornecedores.Count);
-                //    Console.WriteLine("Registro atualizado");
-                //}
+                conexao.Open();
+
+                string sql = $"UPDATE dbo.Fornecedor SET Razao_Social='{fornecedorAtualizado.RazaoSocial}', '{fornecedorAtualizado.Situacao}') WHERE CNPJ='{fornecedorAtualizado.CNPJ}'";
+                SqlCommand cmd = new SqlCommand(sql, conexao);
+                _ = cmd.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Ocorreu um erro: " + ex.Message);
+                Console.WriteLine("Exception: " + ex.Message);
+                Console.ReadKey();
+            }
+            finally
+            {
+                conexao.Close();
             }
         }
 
         public static void BloquearFornecedor(string cnpj)
         {
-            _ = new Configuracao();
-
             using var conexao = Configuracao.Conexao();
 
             conexao.Open();
@@ -205,8 +174,6 @@ namespace CadastrosBasicos.ManipulaArquivos
 
         public static void DesbloqueiaFornecedor(string cnpj)
         {
-            _ = new Configuracao();
-
             using var conexao = Configuracao.Conexao();
 
             conexao.Open();

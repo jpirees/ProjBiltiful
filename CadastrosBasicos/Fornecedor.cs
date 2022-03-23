@@ -171,7 +171,7 @@ namespace CadastrosBasicos
             }
         }
 
-        public Fornecedor Editar()
+        public static Fornecedor Editar()
         {
             Fornecedor fornecedor;
             Console.WriteLine("Somente algumas informacoes podem ser alterada como (Razao social/situacao), caso nao queira alterar alguma informacao pressione enter!");
@@ -183,7 +183,7 @@ namespace CadastrosBasicos
             if (fornecedor != null)
             {
                 Console.WriteLine("Razao social: ");
-                string nome = Console.ReadLine().Trim().PadLeft(50, ' ');
+                string nome = Console.ReadLine().Trim();
                 Console.WriteLine("Situacao [A - Ativo/ I - inativo]: ");
                 bool flagSituacao = char.TryParse(Console.ReadLine().ToString().ToUpper(), out char situacao);
 
@@ -191,7 +191,7 @@ namespace CadastrosBasicos
 
                 fornecedor.Situacao = flagSituacao == false ? fornecedor.Situacao : situacao;
 
-                write.EditarFornecedor(fornecedor);
+                Write.EditarFornecedor(fornecedor);
             }
             return fornecedor;
         }

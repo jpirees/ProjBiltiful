@@ -29,10 +29,7 @@ namespace CadastrosBasicos
                 + Situacao;
         }
 
-        public Produto()
-        {
-
-        }
+        public Produto() { }
 
         public Produto(string cBarras, string nome, decimal vVenda, DateTime uVenda, DateTime dCadastro, char situacao)
         {
@@ -90,7 +87,7 @@ namespace CadastrosBasicos
 
         public static void Cadastrar()
         {
-            Produto produto = new Produto();
+            Produto produto;
 
             char sit = 'A';
             string cod, nomeTemp, verificaProduto = null;
@@ -160,14 +157,14 @@ namespace CadastrosBasicos
                     Console.Write("Valor da Venda: ");
                     valorVenda = Convert.ToDecimal(Console.ReadLine());
 
-                    if ((valorVenda < 1) || (valorVenda > (decimal) 999.99))
+                    if ((valorVenda < 1) || (valorVenda > (decimal)999.99))
                     {
                         Console.WriteLine("\n Valor invalido. Apenas valores maior que 0 e menor que 999,99.");
                         Console.WriteLine("\n Pressione ENTER para voltar ao cadastro.");
                         Console.ReadKey();
                     }
 
-                } while ((valorVenda < 1) || (valorVenda > (decimal) 999.99));
+                } while ((valorVenda < 1) || (valorVenda > (decimal)999.99));
 
 
                 do
@@ -201,7 +198,7 @@ namespace CadastrosBasicos
 
         public static void GravarProduto(Produto produto)
         {
-            _ = new Configuracao();
+
 
             using var conexao = Configuracao.Conexao();
 
@@ -322,13 +319,11 @@ namespace CadastrosBasicos
 
         public static bool VerificaListaProduto()
         {
-            int registros = 0;
-
-            _ = new Configuracao();
+            string registros = null;
 
             using (var conexao = Configuracao.Conexao())
             {
-                string sql = $"SELECT COUNT(Codigo_Barras) FROM dbo.Produto";
+                string sql = $"SELECT MAX(Codigo_Barras) FROM dbo.Produto";
 
                 conexao.Open();
 
@@ -337,7 +332,7 @@ namespace CadastrosBasicos
                     try
                     {
                         cmd.ExecuteNonQuery();
-                        registros = (int) cmd.ExecuteScalar();
+                        registros = (string)cmd.ExecuteScalar();
                     }
                     catch (Exception ex)
                     {
@@ -350,18 +345,16 @@ namespace CadastrosBasicos
                 }
             }
 
-            return registros != 0;
+            return registros != null;
         }
 
         public static void ImprimirProdutos()
         {
-            
+
             List<Produto> produtos = new List<Produto>();
 
             if (VerificaListaProduto())
             {
-                _ = new Configuracao();
-
                 using (var conexao = Configuracao.Conexao())
                 {
                     string sql = $"SELECT Codigo_Barras, Nome, Valor_Venda, Ultima_Venda, Data_Cadastro, Situacao FROM dbo.Produto";
@@ -531,10 +524,7 @@ namespace CadastrosBasicos
             }
             else
             {
-                _ = new Configuracao();
-
                 using var conexao = Configuracao.Conexao();
-
 
                 string sql = $"UPDATE dbo.Produto SET ";
 
@@ -573,8 +563,6 @@ namespace CadastrosBasicos
         {
             Produto produto = null;
 
-            _ = new Configuracao();
-
             using (var conexao = Configuracao.Conexao())
             {
                 string sql = $"SELECT Codigo_Barras, Nome, Valor_Venda, Ultima_Venda, Data_Cadastro, Situacao FROM dbo.Produto WHERE Codigo_Barras='{cod}'";
@@ -612,8 +600,6 @@ namespace CadastrosBasicos
         public static Produto RetornaProduto(string cod)
         {
             Produto produto = null;
-
-            _ = new Configuracao();
 
             using (var conexao = Configuracao.Conexao())
             {

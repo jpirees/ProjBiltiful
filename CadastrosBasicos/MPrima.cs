@@ -145,7 +145,7 @@ namespace CadastrosBasicos
             _ = DateTime.TryParse(mprima.UltimaCompra.ToString("yyyy-MM-dd"), out DateTime UltimaCompra);
             _ = DateTime.TryParse(mprima.DataCadastro.ToString("yyyy-MM-dd"), out DateTime DataCadastro);
 
-            _ = new Configuracao();
+            
 
             using var conexao = Configuracao.Conexao();
 
@@ -227,7 +227,7 @@ namespace CadastrosBasicos
         {
             MPrima mprima = null;
 
-            _ = new Configuracao();
+            
 
             using (var conexao = Configuracao.Conexao())
             {
@@ -352,7 +352,7 @@ namespace CadastrosBasicos
             }
             else
             {
-                _ = new Configuracao();
+                
 
                 using var conexao = Configuracao.Conexao();
 
@@ -392,13 +392,11 @@ namespace CadastrosBasicos
 
         public static bool VerificaListaMPrima()
         {
-            int registros = 0;
-
-            _ = new Configuracao();
+            int? registros = null;
 
             using (var conexao = Configuracao.Conexao())
             {
-                string sql = $"SELECT COUNT(Codigo) FROM dbo.MateriaPrima";
+                string sql = $"SELECT MAX(Codigo) FROM dbo.MateriaPrima";
 
                 conexao.Open();
 
@@ -420,7 +418,7 @@ namespace CadastrosBasicos
                 }
             }
 
-            return registros != 0;
+            return registros != null;
         }
 
         public static void ImprimirMPrimas()
@@ -429,7 +427,7 @@ namespace CadastrosBasicos
 
             if (VerificaListaMPrima())
             {
-                _ = new Configuracao();
+                
 
                 using (var conexao = Configuracao.Conexao())
                 {

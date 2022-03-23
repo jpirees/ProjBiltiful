@@ -60,7 +60,7 @@ namespace CadastrosBasicos
                 int opcao;
 
                 Console.WriteLine("\nCliente já está bloqueado.");
-                Console.WriteLine("\nDeseja desbloqueado ? [1 - Sim | 2 - Nao]");
+                Console.WriteLine("\nDeseja desbloqueá-lo ? [1 - Sim | 2 - Nao]");
 
                 do
                 {
@@ -93,7 +93,7 @@ namespace CadastrosBasicos
                 }
             }
         }
-        public Cliente Editar()
+        public static Cliente Editar()
         {
             Cliente cliente;
             Console.WriteLine("Somente algumas informacoes podem ser alterada como (Nome/Data de Nascimento/sexo/Situacao), caso nao queira alterar alguma informacao pressione enter!");
@@ -117,7 +117,7 @@ namespace CadastrosBasicos
                 cliente.DataNascimento = flag == false ? cliente.DataCadastro : dNascimento;
                 cliente.Situacao = flagSituacao == false ? cliente.Situacao : situacao;
 
-                write.EditarCliente(cliente);
+                Write.EditarCliente(cliente);
 
                 Console.WriteLine("\n Cliente cadastrado com sucesso.");
                 Console.WriteLine("\n Pressione ENTER para continuar...");
